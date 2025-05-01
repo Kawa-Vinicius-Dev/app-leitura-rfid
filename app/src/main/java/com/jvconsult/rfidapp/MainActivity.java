@@ -3,7 +3,9 @@ package com.jvconsult.rfidapp;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 
@@ -30,7 +32,9 @@ public class MainActivity extends AppCompatActivity implements IAsynchronousMess
 
     private static final String TAG = "Demo";
 
-    private ListView listView = null; // Data list object
+    private ListView list;
+    private ArrayAdapter<String> adapter;
+    private ArrayList<String> arrayList;
     private SimpleAdapter sa = null;
 
     private static final int REQUEST_READ_PHONE_STATE = 1;
@@ -69,6 +73,15 @@ public class MainActivity extends AppCompatActivity implements IAsynchronousMess
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        list = findViewById(R.id.ltEPCs);
+        arrayList = new ArrayList<String>();
+
+        // Adapter: You need three parameters 'the context, id of the layout (it will be where the data is shown),
+        // and the array that contains the data
+        adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, arrayList);
+
+        // Here, you set the data in your ListView
+        list.setAdapter(adapter);
         checkPermission();
     }
 
@@ -100,6 +113,8 @@ public class MainActivity extends AppCompatActivity implements IAsynchronousMess
         }
         UHFReader.getUHFInstance().Stop();
         isReading = false;
+        adapter.notifyDataSetChanged();
+        Log.d("Info", "Tags output stopped:" + arrayList);
         Log.d("Info", "Stopped read");
     }
 
@@ -115,9 +130,11 @@ public class MainActivity extends AppCompatActivity implements IAsynchronousMess
                     hmList.put(model._EPC + model._TID, model);
                 } else {
                     hmList.put(model._EPC + model._TID, model);
+                    arrayList.add(model._EPC + model._TID);
+                    Log.d("Info", "Tags output:" + arrayList);
                 }
             }
-            ShowList();
+            //ShowList();
         } catch (Exception ex) {
             Log.d("Debug", "Tags output exceptions:" + ex.getMessage());
         }
@@ -142,11 +159,9 @@ public class MainActivity extends AppCompatActivity implements IAsynchronousMess
     }
 
     protected void ShowList() {
-        sa = new SimpleAdapter(this, GetData(), R.layout.epclist_item,
-                new String[] { "EPC", "ReadCount" }, new int[] {
-                R.id.EPCList_TagID, R.id.EPCList_ReadCount });
-        listView.setAdapter(sa);
-        listView.invalidate();
+        Log.d("Info", "Init showList");
+
+
     }
 
     @Override
@@ -156,5 +171,10 @@ public class MainActivity extends AppCompatActivity implements IAsynchronousMess
             initView();
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        return super.onKeyDown(keyCode, event);
     }
 }
