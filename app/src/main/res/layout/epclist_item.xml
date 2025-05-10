@@ -1,22 +1,34 @@
-<?xml version="1.0" encoding="utf-8"?><LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="20dp"
-    android:orientation="horizontal">
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:background="#FFFFFF"
+    android:layout_marginBottom="4dp"
+    android:elevation="2dp">
 
     <TextView
         android:id="@+id/EPCList_TagID"
         android:layout_width="0dp"
-        android:layout_weight="0.8"
         android:layout_height="wrap_content"
-        android:text="@string/List_TagID"
-        android:singleLine="false"/>
-    
+        android:layout_weight="0.8"
+        android:text="EPC"
+        android:textColor="#333333"
+        android:textSize="16sp"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:fontFamily="sans-serif-medium" />
+
     <TextView
         android:id="@+id/EPCList_ReadCount"
         android:layout_width="0dp"
-        android:layout_weight="0.2"
         android:layout_height="wrap_content"
-        android:text="@string/List_ReadCount"
-        android:singleLine="false"/>
+        android:layout_weight="0.2"
+        android:text="Count"
+        android:textColor="#555555"
+        android:textSize="14sp"
+        android:gravity="end"
+        android:fontFamily="sans-serif" />
 
 </LinearLayout>
