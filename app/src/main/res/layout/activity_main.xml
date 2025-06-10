@@ -80,6 +80,15 @@
             android:textColor="#FFFFFF"
             android:paddingVertical="12dp" />
 
+        <Button
+            android:id="@+id/btnExport"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Exportar CSV"
+            android:onClick="exportTagsToCsv"
+            />
+
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

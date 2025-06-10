@@ -140,6 +140,15 @@ public class MainActivity extends AppCompatActivity implements IAsynchronousMess
         }
     }
 
+    public void exportTagsToCsv(View v) {
+        if (arrayList.isEmpty()) {
+            Log.d("CSV Export", "Nenhuma tag para exportar.");
+            return;
+        }
+
+        CsvExporter.exportToCsv(arrayList, "tags_lidas.csv");
+    }
+
     @SuppressWarnings({ "rawtypes", "unused" })
     protected List<Map<String, Object>> GetData() {
         List<Map<String, Object>> rt = new ArrayList<Map<String, Object>>();
