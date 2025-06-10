@@ -55,38 +55,51 @@
         <Button
             android:id="@+id/btnRead"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="56dp"
             android:layout_weight="1"
             android:onClick="onRead"
             android:text="Start"
-            android:textSize="20sp"
+            android:textSize="16sp"
             android:backgroundTint="#4CAF50"
             android:textColor="#FFFFFF"
-            android:paddingVertical="12dp" />
-
-        <Space
-            android:layout_width="16dp"
-            android:layout_height="wrap_content" />
+            android:textAllCaps="true"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="12dp"
+            android:minWidth="0dp"
+            android:layout_marginEnd="8dp" />
 
         <Button
             android:id="@+id/btnStop"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="56dp"
             android:layout_weight="1"
             android:onClick="onStop"
             android:text="Stop"
-            android:textSize="20sp"
+            android:textSize="16sp"
             android:backgroundTint="#F44336"
             android:textColor="#FFFFFF"
-            android:paddingVertical="12dp" />
+            android:textAllCaps="true"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="12dp"
+            android:minWidth="0dp"
+            android:layout_marginEnd="8dp" />
 
         <Button
             android:id="@+id/btnExport"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Exportar CSV"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
             android:onClick="exportTagsToCsv"
-            />
+            android:text="Export CSV"
+            android:textSize="16sp"
+            android:backgroundTint="#2196F3"
+            android:textColor="#FFFFFF"
+            android:textAllCaps="true"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="12dp"
+            android:minWidth="0dp" />
+
+
 
 
     </LinearLayout>
