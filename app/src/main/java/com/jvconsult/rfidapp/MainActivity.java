@@ -1,189 +1,103 @@
 package com.jvconsult.rfidapp;
 
-import android.content.pm.PackageManager;
+import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
-import android.widget.SimpleAdapter;
+import android.widget.Button;
+import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
-import androidx.annotation.NonNull;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-
-import com.pda.rfid.EPCModel;
-import com.pda.rfid.IAsynchronousMessage;
-import com.pda.rfid.uhf.UHFReader;
-import com.port.Adapt;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
-public class MainActivity extends AppCompatActivity implements IAsynchronousMessage {
+public class MainActivity extends AppCompatActivity {
 
-    private static final String TAG = "Demo";
+    private ActivityResultLauncher<String> importarPlanilhaLauncher;
+    private ActivityResultLauncher<String> importarSetorLauncher;
 
-    private ListView list;
-    private ArrayAdapter<String> adapter;
-    private ArrayList<String> arrayList;
-    private SimpleAdapter sa = null;
+    private List<ItemPlanilha> listaPlanilha = new ArrayList<>();
+    private List<SetorLocalizacao> listaSetores = new ArrayList<>();
 
-    private static final int REQUEST_READ_PHONE_STATE = 1;
-    private boolean isOpened = false;
-    private boolean isReading = false;
-    private HashMap<String, EPCModel> hmList = new HashMap<>();
-    private Object hmList_Lock = new Object();
-
-    private void initView() {
-        Adapt.init(this);
-        isOpened = UHFReader.getUHFInstance().OpenConnect(this);
-        if (!isOpened) {
-            Log.d(TAG, "open UHF failed!");
-        }
-        UHFReader._Config.SetEPCBaseBandParam(255, 0, 1, 0);
-        UHFReader._Config.SetANTPowerParam(1, 20);
-    }
-    private void checkPermission() {
-//
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.READ_PHONE_STATE)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new
-                    String[]{android.Manifest.permission.READ_PHONE_STATE}, REQUEST_READ_PHONE_STATE);
-        } else {
-            initView();
-        }
-    }
+    private Button btnImportarPlanilha, btnImportarSetor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
+
+        String nome = getSharedPreferences("prefs", MODE_PRIVATE)
+                .getString("usuario_nome", null);
+        if (nome == null) {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
+
+        DadosGlobais.getInstance().setUsuario(nome);
+
         setContentView(R.layout.activity_main);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
-        list = findViewById(R.id.ltEPCs);
-        arrayList = new ArrayList<String>();
 
-        // Adapter: You need three parameters 'the context, id of the layout (it will be where the data is shown),
-        // and the array that contains the data
-        adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, arrayList);
 
-        // Here, you set the data in your ListView
-        list.setAdapter(adapter);
-        checkPermission();
+
+        btnImportarPlanilha = findViewById(R.id.btnImportarPlanilha);
+        btnImportarSetor    = findViewById(R.id.btnImportarSetor);
+        Button btnLogout = findViewById(R.id.btnLogout);
+        btnLogout.setOnClickListener(this::onLogout);
+
+
+        importarPlanilhaLauncher = registerForActivityResult(
+                new ActivityResultContracts.GetContent(),
+                uri -> {
+                    if (uri == null) return;
+                    listaPlanilha = ImportadorPlanilha.importar(this, uri);
+                    DadosGlobais.getInstance().setListaPlanilha(listaPlanilha);
+
+                    btnImportarPlanilha.setText("Planilha OK");
+                    btnImportarPlanilha.setEnabled(false);
+                    btnImportarPlanilha.setTextColor(Color.WHITE);
+                    btnImportarPlanilha.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#43A047")));
+                    btnImportarPlanilha.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_check,0,0,0);
+
+                    Toast.makeText(this,"Importados "+listaPlanilha.size()+" itens!",Toast.LENGTH_SHORT).show();
+                });
+
+        importarSetorLauncher = registerForActivityResult(
+                new ActivityResultContracts.GetContent(),
+                uri -> {
+                    if (uri == null) return;
+                    listaSetores = ImportadorSetor.importar(this, uri);
+                    DadosGlobais.getInstance().setListaSetores(listaSetores);
+
+                    btnImportarSetor.setText("Setores OK");
+                    btnImportarSetor.setEnabled(false);
+                    btnImportarSetor.setTextColor(Color.WHITE);
+                    btnImportarSetor.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#43A047")));
+                    btnImportarSetor.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_check,0,0,0);
+
+                    Toast.makeText(this,"Importados "+listaSetores.size()+" setores!",Toast.LENGTH_SHORT).show();
+                });
     }
 
-    @Override
-    protected void onDestroy() {
-        UHFReader.getUHFInstance().CloseConnect();
-        super.onDestroy();
-    }
+    public void onImportarPlanilha(View v){ importarPlanilhaLauncher.launch("text/*"); }
+    public void onImportarSetor   (View v){ importarSetorLauncher.launch("text/*"); }
 
-    public void onRead(View v) {
-        Log.d("Info", "Starting read");
-        if (!isOpened) {
-            return ;
-        }
-        if (isReading) {
-            return ;
-        }
-        isReading = UHFReader._Tag6C.GetEPC(1, 1) == 0;
-        Log.d("Info", "Started read");
-    }
-
-    public void onStop(View v) {
-        Log.d("Info", "Stopping read");
-        if (!isOpened) {
-            return ;
-        }
-        if (!isReading) {
+    public void onEscolherLoja(View v){
+        if (listaPlanilha.isEmpty() || listaSetores.isEmpty()){
+            Toast.makeText(this,"Importe planilha e setores primeiro!",Toast.LENGTH_SHORT).show();
             return;
         }
-        UHFReader.getUHFInstance().Stop();
-        isReading = false;
-        adapter.notifyDataSetChanged();
-        Log.d("Info", "Tags output stopped:" + arrayList);
-        Log.d("Info", "Stopped read");
+        startActivity(new Intent(this, LojaActivity.class));
     }
 
-    @Override
-    public void OutPutEPC(EPCModel model) {
-        try {
-            synchronized (hmList_Lock) {
-                if (hmList.containsKey(model._EPC + model._TID)) {
-                    EPCModel tModel = hmList.get(model._EPC + model._TID);
-                    tModel._TotalCount++;
-                    model._TotalCount = tModel._TotalCount;
-                    hmList.remove(model._EPC + model._TID);
-                    hmList.put(model._EPC + model._TID, model);
-                } else {
-                    hmList.put(model._EPC + model._TID, model);
-                    arrayList.add(model._EPC + model._TID);
-                    Log.d("Info", "Tags output:" + arrayList);
-                }
-            }
-            //ShowList();
-        } catch (Exception ex) {
-            Log.d("Debug", "Tags output exceptions:" + ex.getMessage());
-        }
+    public void onLogout(View v) {
+        getSharedPreferences("prefs", MODE_PRIVATE).edit().clear().apply(); // remove nome
+        DadosGlobais.getInstance().resetar(); // limpa dados do singleton
+        startActivity(new Intent(this, LoginActivity.class));
+        finish();
     }
 
-    public void exportTagsToCsv(View v) {
-        if (arrayList.isEmpty()) {
-            Log.d("CSV Export", "Nenhuma tag para exportar.");
-            return;
-        }
-
-        CsvExporter.exportToCsv(arrayList, "tags_lidas.csv");
-    }
-
-    @SuppressWarnings({ "rawtypes", "unused" })
-    protected List<Map<String, Object>> GetData() {
-        List<Map<String, Object>> rt = new ArrayList<Map<String, Object>>();
-        synchronized (hmList_Lock) {
-            Iterator iter = hmList.entrySet().iterator();
-            while (iter.hasNext()) {
-                Map.Entry entry = (Map.Entry) iter.next();
-                String key = (String) entry.getKey();
-                EPCModel val = (EPCModel) entry.getValue();
-                Map<String, Object> map = new HashMap<String, Object>();
-                map.put("EPC", val._EPC);
-                map.put("ReadCount", val._TotalCount);
-                rt.add(map);
-            }
-        }
-        return rt;
-    }
-
-    protected void ShowList() {
-        Log.d("Info", "Init showList");
-
-
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        if (requestCode == REQUEST_READ_PHONE_STATE) {
-            initView();
-        }
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    }
-
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        return super.onKeyDown(keyCode, event);
-    }
 }
