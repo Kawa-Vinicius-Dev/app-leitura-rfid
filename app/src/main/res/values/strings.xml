@@ -33,7 +33,7 @@
     <string name="btn_UHFMenu_Back">Back</string>
 
     <!-- UHF Read -->
-    <string name="app_name">PDA Example</string>
+    <string name="app_name">Inventário Atacarejo</string>
     <string name="List_TagID">EPC</string>
     <string name="List_ReadCount">Count</string>
     <string name="Tag_Time">Time:0 S </string>

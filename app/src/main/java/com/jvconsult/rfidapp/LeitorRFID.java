@@ -8,27 +8,44 @@ import com.port.Adapt;
 
 public class LeitorRFID {
     private boolean aberto = false;
+    private boolean lendo = false;
 
     public LeitorRFID(Context contexto, IAsynchronousMessage callback) {
-        Adapt.init(contexto);
-        UHFReader.getUHFInstance().OpenConnect(callback);
-        aberto = true;
-        if (!aberto) {
-            Log.d("LeitorRFID", "Falha ao abrir UHF!");
+        try {
+            Adapt.init(contexto);
+            UHFReader.getUHFInstance().OpenConnect(callback);
+            aberto = true;
+            if (!aberto) {
+                Log.d("LeitorRFID", "Falha ao abrir UHF!");
+            }
+            UHFReader._Config.SetEPCBaseBandParam(255, 0, 1, 0);
+            UHFReader._Config.SetANTPowerParam(1, 20);
+        } catch (Exception e) {
+            Log.e("LeitorRFID", "Erro ao inicializar leitor: " + e.getMessage());
+            aberto = false;
         }
-        UHFReader._Config.SetEPCBaseBandParam(255, 0, 1, 0);
-        UHFReader._Config.SetANTPowerParam(1, 20);
     }
 
     public boolean iniciarLeitura() {
-        return UHFReader._Tag6C.GetEPC(1, 1) == 0;
+        if (aberto && !lendo) {
+            lendo = UHFReader._Tag6C.GetEPC(1, 1) == 0;
+            return lendo;
+        }
+        return false;
     }
 
     public void pararLeitura() {
-        UHFReader.getUHFInstance().Stop();
+        if (aberto && lendo) {
+            UHFReader.getUHFInstance().Stop();
+            lendo = false;
+        }
     }
 
     public void fechar() {
-        UHFReader.getUHFInstance().CloseConnect();
+        if (aberto) {
+            UHFReader.getUHFInstance().CloseConnect();
+            aberto = false;
+            lendo = false;
+        }
     }
 }

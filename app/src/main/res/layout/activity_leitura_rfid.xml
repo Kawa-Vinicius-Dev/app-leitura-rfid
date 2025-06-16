@@ -83,4 +83,14 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_margin="18dp" />
+    <TextView
+        android:id="@+id/tvContadorItens"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Itens lidos: 0/0"
+        android:textSize="16sp"
+        android:textColor="#333"
+        android:layout_marginTop="8dp"
+        android:layout_gravity="center_horizontal"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
