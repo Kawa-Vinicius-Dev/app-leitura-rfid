@@ -28,8 +28,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
 
     private ArrayList<String> epcsLidosNaSessao = new ArrayList<>();
     private TextView tvContadorItens;
-
-
+    private int potenciaAtual = 20;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +70,29 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
 
         // Agora sim pode chamar, pois tudo foi carregado!
         atualizarContadorItens();
+
+        SeekBar sbPotencia = findViewById(R.id.sbPotencia);
+        TextView tvPotencia = findViewById(R.id.tvPotencia);
+
+        // Mostra o valor inicial
+        tvPotencia.setText("Potência: " + potenciaAtual);
+
+        sbPotencia.setProgress(potenciaAtual);
+
+        sbPotencia.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                potenciaAtual = progress;
+                tvPotencia.setText("Potência: " + potenciaAtual);
+                // Se já tem leitor inicializado, já muda a potência em tempo real
+                if (leitorRFID != null) {
+                    leitorRFID.setPotencia(potenciaAtual);
+                }
+            }
+
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
     }
 
 
@@ -92,6 +114,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         if (keyCode == 139 && !lendo && setorSelecionado != null) {
             if (leitorRFID == null)
                 leitorRFID = new LeitorRFID(this, this);
+            leitorRFID.setPotencia(potenciaAtual);
             lendo = leitorRFID.iniciarLeitura();
             tvMsgLeitura.setText("Leitura iniciada. Aproxime as etiquetas.");
             epcsJaProcessados.clear();

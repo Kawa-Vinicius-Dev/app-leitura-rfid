@@ -48,4 +48,9 @@ public class LeitorRFID {
             lendo = false;
         }
     }
+
+    public void setPotencia(int potencia) {
+        UHFReader._Config.SetANTPowerParam(1, potencia);
+    }
+
 }
