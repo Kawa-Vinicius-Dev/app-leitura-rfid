@@ -152,10 +152,14 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         if (!epcsLidosNaSessao.contains(epcLimpo)) epcsLidosNaSessao.add(epcLimpo);
 
         ItemPlanilha item = encontrarItemPorEPC(epc);
-        if (item != null && item.loja.equals(lojaSelecionada)) {
+        if (item != null && item.loja.equals(lojaSelecionada) &&
+                item.codlocalizacao != null &&
+                item.codlocalizacao.equals(setorSelecionado.codlocalizacao)) {
+
             if (!itensExibidos.contains(item.descresumida)) {
                 itensExibidos.add(item.descresumida);
                 adapter.notifyDataSetChanged();
+                atualizarContadorItens(); // Atualiza sempre que adicionar
             }
             atualizarLocalizacaoSeNecessario(item);
             tvMsgLeitura.setText(msgStatusItem(item, item.descresumida));
@@ -164,11 +168,13 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
             if (!itensExibidos.contains(infoNaoEncontrado)) {
                 itensExibidos.add(infoNaoEncontrado);
                 adapter.notifyDataSetChanged();
+                atualizarContadorItens(); // Atualiza se adicionar info
             }
             if (!epcsNaoEncontrados.contains(epc)) epcsNaoEncontrados.add(epc);
-            tvMsgLeitura.setText("Item " + formatarEPC(epc) + " não pertence a esta loja!");
+            tvMsgLeitura.setText("Item " + formatarEPC(epc) + " não pertence a esta loja/setor!");
         }
     }
+
 
     private ItemPlanilha encontrarItemPorEPC(String epc) {
         if (mapPlaquetasGlobal == null || epc == null) return null;
@@ -206,13 +212,31 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
     }
 
     private void atualizarContadorItens() {
-        int lidos = epcsLidosNaSessao.size();
         int total = 0;
+        Set<String> nomesItensSetor = new HashSet<>();
+
         for (ItemPlanilha item : listaPlanilha) {
-            if (item.loja.equals(lojaSelecionada)) total++;
+            if (
+                    item.loja.equals(lojaSelecionada)
+                            && item.codlocalizacao != null
+                            && item.codlocalizacao.equals(setorSelecionado.codlocalizacao)
+            ) {
+                total++;
+                nomesItensSetor.add(item.descresumida);
+            }
         }
+
+        int lidos = 0;
+        for (String exibido : itensExibidos) {
+            if (nomesItensSetor.contains(exibido)) {
+                lidos++;
+            }
+        }
+
         tvContadorItens.setText("Itens lidos: " + lidos + " / " + total);
     }
+
+
 
     // Processo pesado isolado da UI
     private void finalizarEExportar() {

@@ -59,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
                     btnImportarPlanilha.setText("Planilha OK");
                     btnImportarPlanilha.setEnabled(false);
                     btnImportarPlanilha.setTextColor(Color.WHITE);
-                    btnImportarPlanilha.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#43A047")));
+                    btnImportarPlanilha.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FFB600")));
                     btnImportarPlanilha.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_check,0,0,0);
 
                     Toast.makeText(this,"Importados "+listaPlanilha.size()+" itens!",Toast.LENGTH_SHORT).show();
@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
                     btnImportarSetor.setText("Setores OK");
                     btnImportarSetor.setEnabled(false);
                     btnImportarSetor.setTextColor(Color.WHITE);
-                    btnImportarSetor.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#43A047")));
+                    btnImportarSetor.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FFB600")));
                     btnImportarSetor.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_check,0,0,0);
 
                     Toast.makeText(this,"Importados "+listaSetores.size()+" setores!",Toast.LENGTH_SHORT).show();

@@ -1,0 +1,5 @@
+<!-- res/drawable/bg_msg_leitura.xml -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#FFFDE7"/>
+    <corners android:radius="10dp"/>
+</shape>

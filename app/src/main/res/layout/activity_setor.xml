@@ -1,18 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent" android:padding="16dp">
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FAFAFA">
 
+    <!-- Logo da marca -->
+    <ImageView
+        android:id="@+id/logoNovoAtacarejo"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:src="@drawable/logo_novo_atacarejo"
+        android:layout_marginTop="40dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- Título -->
     <TextView
-        android:layout_width="match_parent"
+        android:id="@+id/tvTituloSetor"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Escolha o setor"
         android:textSize="22sp"
+        android:textColor="#1976D2"
+        android:textStyle="bold"
         android:gravity="center"
-        android:paddingBottom="12dp"/>
+        android:fontFamily="sans-serif-medium"
+        android:layout_marginTop="12dp"
+        app:layout_constraintTop_toBottomOf="@id/logoNovoAtacarejo"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <ListView
-        android:id="@+id/listViewSetores"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
-</LinearLayout>
+    <!-- Card para lista de setores -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="30dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        app:cardCornerRadius="22dp"
+        app:cardElevation="7dp"
+        app:layout_constraintTop_toBottomOf="@id/tvTituloSetor"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ListView
+            android:id="@+id/listViewSetores"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#FFF"
+            android:divider="#E0E0E0"
+            android:dividerHeight="1dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:clipToPadding="false"/>
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
