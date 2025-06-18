@@ -1,7 +1,12 @@
 package com.jvconsult.rfidapp;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.widget.*;
@@ -23,12 +28,12 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
     private ArrayList<String> epcsNaoEncontrados = new ArrayList<>();
     private HashSet<String> epcsJaProcessados = new HashSet<>();
     private boolean lendo = false;
-    private TextView tvMsgLeitura;
+    private TextView tvMsgLeitura, tvContadorItens;
     private HashMap<String, ItemPlanilha> mapPlaquetasGlobal;
-
     private ArrayList<String> epcsLidosNaSessao = new ArrayList<>();
-    private TextView tvContadorItens;
     private int potenciaAtual = 20;
+    private Button btnFinalizar;
+    private MediaPlayer mpSucesso;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +41,8 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         setContentView(R.layout.activity_leitura_rfid);
 
         tvContadorItens = findViewById(R.id.tvContadorItens);
+        tvMsgLeitura    = findViewById(R.id.tvMsgLeitura);
+        btnFinalizar    = findViewById(R.id.btnFinalizar);
 
         setorSelecionado = DadosGlobais.getInstance().getSetorSelecionado();
         if (setorSelecionado == null) {
@@ -43,11 +50,10 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
             finish();
             return;
         }
-
-        listaPlanilha = DadosGlobais.getInstance().getListaPlanilha();
-        listaSetores = DadosGlobais.getInstance().getListaSetores();
+        listaPlanilha   = DadosGlobais.getInstance().getListaPlanilha();
+        listaSetores    = DadosGlobais.getInstance().getListaSetores();
         lojaSelecionada = DadosGlobais.getInstance().getLojaSelecionada();
-        usuario = DadosGlobais.getInstance().getUsuario();
+        usuario         = DadosGlobais.getInstance().getUsuario();
         if (usuario == null)
             usuario = getSharedPreferences("prefs", MODE_PRIVATE).getString("usuario_nome", "Usuário");
 
@@ -58,7 +64,6 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
             if (item.loja.equals(lojaSelecionada))
                 itensFiltrados.add(item);
 
-        tvMsgLeitura = findViewById(R.id.tvMsgLeitura);
         ((TextView) findViewById(R.id.tvLojaSelecionada)).setText("Loja: " + lojaSelecionada);
         ((TextView) findViewById(R.id.tvSetorSelecionado)).setText("Setor: " + setorSelecionado.setor);
 
@@ -66,35 +71,37 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, itensExibidos);
         listView.setAdapter(adapter);
 
-        findViewById(R.id.btnFinalizar).setOnClickListener(v -> finalizarEExportar());
+        mpSucesso = MediaPlayer.create(this, R.raw.sucesso);
 
-        // Agora sim pode chamar, pois tudo foi carregado!
+        btnFinalizar.setOnClickListener(v -> {
+            // Feedback visual imediato
+            btnFinalizar.setText("Finalizando...");
+            btnFinalizar.setEnabled(false);
+            btnFinalizar.setTextColor(Color.WHITE);
+            btnFinalizar.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FFA000")));
+            btnFinalizar.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_hourglass, 0, 0, 0);
+            // Pequeno delay pra interface redesenhar antes de travar com processamento pesado
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                new Thread(this::finalizarEExportar).start();
+            }, 100);
+        });
+
         atualizarContadorItens();
 
         SeekBar sbPotencia = findViewById(R.id.sbPotencia);
         TextView tvPotencia = findViewById(R.id.tvPotencia);
-
-        // Mostra o valor inicial
         tvPotencia.setText("Potência: " + potenciaAtual);
-
         sbPotencia.setProgress(potenciaAtual);
-
         sbPotencia.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 potenciaAtual = progress;
                 tvPotencia.setText("Potência: " + potenciaAtual);
-                // Se já tem leitor inicializado, já muda a potência em tempo real
-                if (leitorRFID != null) {
-                    leitorRFID.setPotencia(potenciaAtual);
-                }
+                if (leitorRFID != null) leitorRFID.setPotencia(potenciaAtual);
             }
-
             @Override public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override public void onStopTrackingTouch(SeekBar seekBar) {}
         });
     }
-
 
     private void construirMapaPlaquetasGlobal(List<ItemPlanilha> lista) {
         mapPlaquetasGlobal = new HashMap<>();
@@ -104,16 +111,12 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                 mapPlaquetasGlobal.put(chave, item);
             }
         }
-        for (String plaq : mapPlaquetasGlobal.keySet()) {
-            Log.d("PlaquetaImportada", plaq);
-        }
     }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == 139 && !lendo && setorSelecionado != null) {
-            if (leitorRFID == null)
-                leitorRFID = new LeitorRFID(this, this);
+            if (leitorRFID == null) leitorRFID = new LeitorRFID(this, this);
             leitorRFID.setPotencia(potenciaAtual);
             lendo = leitorRFID.iniciarLeitura();
             tvMsgLeitura.setText("Leitura iniciada. Aproxime as etiquetas.");
@@ -123,26 +126,13 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         return super.onKeyDown(keyCode, event);
     }
 
-    private void atualizarContadorItens() {
-        int lidos = epcsLidosNaSessao.size(); // ou epcsJaProcessados.size(), se preferir
-        int total = 0;
-        for (ItemPlanilha item : listaPlanilha) {
-            if (item.loja.equals(lojaSelecionada)) {
-                total++;
-            }
-        }
-        tvContadorItens.setText("Itens lidos: " + lidos + " / " + total);
-    }
-
-
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         if (keyCode == 139 && lendo && leitorRFID != null) {
             leitorRFID.pararLeitura();
             lendo = false;
             tvMsgLeitura.setText("Leitura pausada! Aperte o gatilho para ler novamente.");
-            if (!epcsNaoEncontrados.isEmpty())
-                mostrarDialogNaoEncontrados();
+            if (!epcsNaoEncontrados.isEmpty()) mostrarDialogNaoEncontrados();
             return true;
         }
         return super.onKeyUp(keyCode, event);
@@ -159,10 +149,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
 
     private void processarEPC(String epc) {
         String epcLimpo = formatarEPC(epc);
-        if (!epcsLidosNaSessao.contains(epcLimpo)) {
-            epcsLidosNaSessao.add(epcLimpo);
-        }
-
+        if (!epcsLidosNaSessao.contains(epcLimpo)) epcsLidosNaSessao.add(epcLimpo);
 
         ItemPlanilha item = encontrarItemPorEPC(epc);
         if (item != null && item.loja.equals(lojaSelecionada)) {
@@ -181,7 +168,6 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
             if (!epcsNaoEncontrados.contains(epc)) epcsNaoEncontrados.add(epc);
             tvMsgLeitura.setText("Item " + formatarEPC(epc) + " não pertence a esta loja!");
         }
-        Log.d("PlaquetaLida", "EPC lido: [" + epc + "] Limpo: [" + epc.trim().replaceFirst("^0+(?!$)", "") + "]");
     }
 
     private ItemPlanilha encontrarItemPorEPC(String epc) {
@@ -191,12 +177,8 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
     }
 
     private void atualizarLocalizacaoSeNecessario(ItemPlanilha item) {
-        if (!setorSelecionado.codlocalizacao.equals(item.codlocalizacao)) {
-            String setorAntigo = item.codlocalizacao;
+        if (!setorSelecionado.codlocalizacao.equals(item.codlocalizacao))
             item.codlocalizacao = setorSelecionado.codlocalizacao;
-            Log.d("LeituraActivity", "Item " + item.descresumida +
-                    " movido do setor " + setorAntigo + " para " + setorSelecionado.codlocalizacao);
-        }
     }
 
     private String msgStatusItem(ItemPlanilha item, String info) {
@@ -209,13 +191,12 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
 
     private void mostrarDialogNaoEncontrados() {
         StringBuilder sb = new StringBuilder();
-        for (String epc : epcsNaoEncontrados)
-            sb.append(formatarEPC(epc)).append("\n");
-        new AlertDialog.Builder(this)
+        for (String epc : epcsNaoEncontrados) sb.append(formatarEPC(epc)).append("\n");
+        runOnUiThread(() -> new AlertDialog.Builder(this)
                 .setTitle("EPCs não encontrados")
                 .setMessage("Os seguintes EPCs não foram encontrados:\n\n" + sb)
                 .setPositiveButton("Fechar", (d, w) -> epcsNaoEncontrados.clear())
-                .show();
+                .show());
     }
 
     public static String formatarEPC(String epc) {
@@ -224,6 +205,16 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         return ultimos.replaceFirst("^0+(?!$)", "");
     }
 
+    private void atualizarContadorItens() {
+        int lidos = epcsLidosNaSessao.size();
+        int total = 0;
+        for (ItemPlanilha item : listaPlanilha) {
+            if (item.loja.equals(lojaSelecionada)) total++;
+        }
+        tvContadorItens.setText("Itens lidos: " + lidos + " / " + total);
+    }
+
+    // Processo pesado isolado da UI
     private void finalizarEExportar() {
         List<ItemPlanilha> itensMovidos = new ArrayList<>();
         List<ItemPlanilha> itensOutrasLojas = new ArrayList<>();
@@ -236,49 +227,41 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                 if (plaqLimpo.equals(epcLido)) {
                     encontrou = true;
                     if (item.loja.equals(lojaSelecionada)) {
-                        // Se é da loja selecionada, entra como "movido"
                         if (!item.codlocalizacao.equals(setorSelecionado.codlocalizacao)) {
-                            // Só muda o setor se for diferente
                             item.codlocalizacao = setorSelecionado.codlocalizacao;
                         }
-                        // Adiciona ao log de movidos
-                        itensMovidos.add(new ItemPlanilha(
-                                item.loja, item.sqbem, item.codgrupo, item.codlocalizacao,
-                                item.nrobem, item.nroincorp, item.descresumida, item.descdetalhada,
-                                item.qtdbem, item.nroplaqueta, item.nroseriebem, item.modelobem
-                        ));
+                        itensMovidos.add(item);
                     } else {
-                        // Pertence a outra loja
-                        itensOutrasLojas.add(new ItemPlanilha(
-                                item.loja, item.sqbem, item.codgrupo, item.codlocalizacao,
-                                item.nrobem, item.nroincorp, item.descresumida, item.descdetalhada,
-                                item.qtdbem, item.nroplaqueta, item.nroseriebem, item.modelobem
-                        ));
+                        itensOutrasLojas.add(item);
                     }
                     break;
                 }
             }
-            if (!encontrou) {
-                epcsNaoCadastrados.add(epcLido);
-            }
+            if (!encontrou) epcsNaoCadastrados.add(epcLido);
         }
 
         LogHelper.logRelatorio(this, usuario, itensMovidos, itensOutrasLojas, epcsNaoCadastrados);
         String caminho = ExportadorPlanilha.exportarCSV(this, listaPlanilha).getAbsolutePath();
-        Toast.makeText(this, "Exportado para: " + caminho, Toast.LENGTH_LONG).show();
 
-        // Volta pra tela de setores
-        Intent intent = new Intent(this, SetorActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        startActivity(intent);
-        finish();
+        runOnUiThread(() -> {
+            if (mpSucesso != null) mpSucesso.start();
+            Toast.makeText(this, "Exportado para: " + caminho, Toast.LENGTH_LONG).show();
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                btnFinalizar.setText("Concluído!");
+                btnFinalizar.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#43A047"))); // verde
+                btnFinalizar.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_check, 0, 0, 0);
+                Intent intent = new Intent(this, SetorActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+                finish();
+            }, 1200);
+        });
     }
-
-
 
     @Override
     protected void onDestroy() {
         if (leitorRFID != null) leitorRFID.fechar();
+        if (mpSucesso != null) mpSucesso.release();
         super.onDestroy();
     }
 }
