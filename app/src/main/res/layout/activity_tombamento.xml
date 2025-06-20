@@ -10,8 +10,8 @@
     <!-- Logo -->
     <ImageView
         android:id="@+id/imgLogo"
-        android:layout_width="60dp"
-        android:layout_height="38dp"
+        android:layout_width="188dp"
+        android:layout_height="151dp"
         android:src="@drawable/logo_novo_atacarejo"
         android:contentDescription="Logo Novo Atacarejo"
         app:layout_constraintTop_toTopOf="parent"

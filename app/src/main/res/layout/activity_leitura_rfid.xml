@@ -9,14 +9,14 @@
     <!-- Logo do Novo Atacarejo -->
     <ImageView
         android:id="@+id/imgLogoNovoAtacarejo"
-        android:layout_width="72dp"
-        android:layout_height="72dp"
-        android:src="@drawable/logo_novo_atacarejo"
+        android:layout_width="188dp"
+        android:layout_height="151dp"
+        android:layout_marginTop="18dp"
         android:contentDescription="Logo Novo Atacarejo"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        android:src="@drawable/logo_novo_atacarejo"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="18dp" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <!-- Título -->
     <TextView
