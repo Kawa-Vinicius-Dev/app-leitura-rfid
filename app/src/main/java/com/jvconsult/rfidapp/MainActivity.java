@@ -1,5 +1,6 @@
 package com.jvconsult.rfidapp;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
@@ -93,11 +94,32 @@ public class MainActivity extends AppCompatActivity {
         startActivity(new Intent(this, LojaActivity.class));
     }
 
-    public void onLogout(View v) {
-        getSharedPreferences("prefs", MODE_PRIVATE).edit().clear().apply(); // remove nome
-        DadosGlobais.getInstance().resetar(); // limpa dados do singleton
-        startActivity(new Intent(this, LoginActivity.class));
-        finish();
+    public void onTombar(View v) {
+        List<ItemPlanilha> planilha = DadosGlobais.getInstance().getListaPlanilha();
+        if (planilha == null || planilha.isEmpty()) {
+            Toast.makeText(this, "Importe a planilha primeiro!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        startActivity(new Intent(this, TombamentoActivity.class));
     }
+
+
+    public void onLogout(View v) {
+        new AlertDialog.Builder(this)
+                .setTitle("Sair do aplicativo")
+                .setMessage("Tem certeza que deseja sair?\n\n"
+                        + "Ao sair, é necessário importar novamente a planilha editada na próxima vez que fizer login.\n"
+                        + "Se importar uma planilha antiga, você pode perder as alterações já feitas no inventário.\n\n"
+                        + "Dica: Sempre use a planilha mais recente (inventario_editado.csv) após o logout.")
+                .setPositiveButton("Sair", (dialog, which) -> {
+                    getSharedPreferences("prefs", MODE_PRIVATE).edit().clear().apply(); // remove nome
+                    DadosGlobais.getInstance().resetar(); // limpa dados do singleton
+                    startActivity(new Intent(this, LoginActivity.class));
+                    finish();
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
 
 }

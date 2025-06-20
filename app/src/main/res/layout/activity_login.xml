@@ -6,70 +6,100 @@
     android:background="#FAFAFA"
     android:padding="24dp">
 
- <!-- Logo (opcional) -->
+   <!-- Logo (opcional) -->
+   <ImageView
+       android:id="@+id/imgLogo"
+       android:layout_width="72dp"
+       android:layout_height="72dp"
+       android:layout_marginTop="4dp"
+       android:contentDescription="Logo Novo Atacarejo"
+       android:src="@drawable/logo_novo_atacarejo"
+       app:layout_constraintEnd_toEndOf="parent"
+       app:layout_constraintHorizontal_bias="0.498"
+       app:layout_constraintStart_toStartOf="parent"
+       app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Título -->
-    <ImageView
-        android:id="@+id/imgLogo"
-        android:layout_width="72dp"
-        android:layout_height="72dp"
-        android:layout_marginTop="4dp"
-        android:contentDescription="Logo Novo Atacarejo"
-        android:src="@drawable/logo_novo_atacarejo"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+   <TextView
+       android:id="@+id/tvTituloLogin"
+       android:layout_width="0dp"
+       android:layout_height="wrap_content"
+       android:layout_marginTop="96dp"
+       android:gravity="center"
+       android:text="Identifique-se para começar"
+       android:textColor="#1976D2"
+       android:textSize="20sp"
+       android:textStyle="bold"
+       app:layout_constraintEnd_toEndOf="parent"
+       app:layout_constraintHorizontal_bias="0.0"
+       app:layout_constraintStart_toStartOf="parent"
+       app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Campo de nome -->
-    <TextView
-        android:id="@+id/tvTituloLogin"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="96dp"
-        android:gravity="center"
-        android:text="Identifique-se para começar"
-        android:textColor="#1976D2"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+   <EditText
+       android:id="@+id/edtNomeUsuario"
+       android:layout_width="0dp"
+       android:layout_height="48dp"
+       android:hint="Seu nome"
+       android:backgroundTint="#1976D2"
+       android:inputType="textPersonName"
+       android:paddingStart="16dp"
+       android:paddingEnd="16dp"
+       android:textColor="#222"
+       android:textColorHint="#888"
+       app:layout_constraintTop_toBottomOf="@id/tvTituloLogin"
+       app:layout_constraintStart_toStartOf="parent"
+       app:layout_constraintEnd_toEndOf="parent"
+       android:layout_marginTop="36dp"/>
 
-    <EditText
-        android:id="@+id/edtNomeUsuario"
-        android:layout_width="0dp"
-        android:layout_height="48dp"
-        android:hint="Seu nome"
-        android:backgroundTint="#1976D2"
-        android:inputType="textPersonName"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:textColor="#222"
-        android:textColorHint="#888"
-        app:layout_constraintTop_toBottomOf="@id/tvTituloLogin"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="36dp"/>
+   <EditText
+       android:id="@+id/edtSenha"
+       android:layout_width="0dp"
+       android:layout_height="48dp"
+       android:hint="Senha"
+       android:backgroundTint="#1976D2"
+       android:inputType="textPassword"
+       android:paddingStart="16dp"
+       android:paddingEnd="16dp"
+       android:textColor="#222"
+       android:textColorHint="#888"
+       app:layout_constraintTop_toBottomOf="@id/edtNomeUsuario"
+       app:layout_constraintStart_toStartOf="parent"
+       app:layout_constraintEnd_toEndOf="parent"
+       android:layout_marginTop="16dp"/>
 
-    <!-- Botão Entrar -->
-    <Button
-        android:id="@+id/btnEntrar"
-        android:layout_width="0dp"
-        android:layout_height="48dp"
-        android:text="ENTRAR"
-        android:textAllCaps="true"
-        android:textColor="#FFF"
-        android:backgroundTint="#1976D2"
-        android:layout_marginTop="24dp"
-        android:layout_marginStart="24dp"
-        android:layout_marginEnd="24dp"
-        android:fontFamily="sans-serif-medium"
-        android:letterSpacing="0.05"
-        android:elevation="2dp"
-        app:layout_constraintTop_toBottomOf="@id/edtNomeUsuario"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+   <!-- Botão Entrar -->
+   <Button
+       android:id="@+id/btnEntrar"
+       android:layout_width="0dp"
+       android:layout_height="48dp"
+       android:text="ENTRAR"
+       android:textAllCaps="true"
+       android:textColor="#FFF"
+       android:backgroundTint="#1976D2"
+       android:layout_marginTop="24dp"
+       android:layout_marginStart="24dp"
+       android:layout_marginEnd="24dp"
+       android:fontFamily="sans-serif-medium"
+       android:letterSpacing="0.05"
+       android:elevation="2dp"
+       app:layout_constraintTop_toBottomOf="@id/edtSenha"
+       app:layout_constraintStart_toStartOf="parent"
+       app:layout_constraintEnd_toEndOf="parent"/>
+
+   <!-- Texto "Não tem conta? Cadastre-se" -->
+   <TextView
+       android:id="@+id/tvCadastro"
+       android:layout_width="wrap_content"
+       android:layout_height="wrap_content"
+       android:text="Não tem conta? Cadastre-se"
+       android:textColor="#1976D2"
+       android:textSize="16sp"
+       android:textStyle="bold"
+       android:fontFamily="sans-serif-medium"
+       android:layout_marginTop="20dp"
+       android:clickable="true"
+       android:focusable="true"
+       app:layout_constraintTop_toBottomOf="@id/btnEntrar"
+       app:layout_constraintStart_toStartOf="parent"
+       app:layout_constraintEnd_toEndOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

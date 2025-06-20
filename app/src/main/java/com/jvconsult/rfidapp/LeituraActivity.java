@@ -264,7 +264,16 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
             if (!encontrou) epcsNaoCadastrados.add(epcLido);
         }
 
-        LogHelper.logRelatorio(this, usuario, itensMovidos, itensOutrasLojas, epcsNaoCadastrados);
+        LogHelper.logRelatorioPorLoja(
+                this,
+                usuario,
+                lojaSelecionada,
+                setorSelecionado.setor,
+                itensMovidos,
+                itensOutrasLojas,
+                epcsNaoCadastrados
+        );
+
         String caminho = ExportadorPlanilha.exportarCSV(this, listaPlanilha).getAbsolutePath();
 
         runOnUiThread(() -> {

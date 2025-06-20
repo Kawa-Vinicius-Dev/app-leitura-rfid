@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FAFAFA"
+    android:padding="24dp">
+
+    <!-- Logo -->
+    <ImageView
+        android:id="@+id/imgLogo"
+        android:layout_width="60dp"
+        android:layout_height="38dp"
+        android:src="@drawable/logo_novo_atacarejo"
+        android:contentDescription="Logo Novo Atacarejo"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="36dp" />
+
+    <ImageButton
+        android:id="@+id/btnFechar"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:background="?selectableItemBackgroundBorderless"
+        android:src="@drawable/ic_close"
+        android:contentDescription="Fechar"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="6dp"/>
+
+    <!-- Título -->
+    <TextView
+        android:id="@+id/tvTituloTombamento"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Tombar Novo Item"
+        android:textAlignment="center"
+        android:textSize="22sp"
+        android:textColor="#1976D2"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-medium"
+        app:layout_constraintTop_toBottomOf="@id/imgLogo"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="24dp"/>
+
+    <ScrollView
+        android:id="@+id/scrollTombamento"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/tvTituloTombamento"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/btnTombar">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <Spinner
+                android:id="@+id/spinnerLoja"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="14dp"/>
+            <EditText android:id="@+id/edtSqBem"         android:layout_width="match_parent" android:layout_height="48dp" android:hint="SQBem"             android:backgroundTint="#1976D2" android:inputType="number"/>
+            <EditText android:id="@+id/edtCodGrupo"      android:layout_width="match_parent" android:layout_height="48dp" android:hint="Código Grupo"      android:backgroundTint="#1976D2" android:inputType="text"/>
+            <Spinner
+                android:id="@+id/spinnerSetor"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="14dp"/>
+            <EditText android:id="@+id/edtNrObem"        android:layout_width="match_parent" android:layout_height="48dp" android:hint="Nro Bem"           android:backgroundTint="#1976D2" android:inputType="number"/>
+            <EditText android:id="@+id/edtNrOincorp"     android:layout_width="match_parent" android:layout_height="48dp" android:hint="Nro Incorp"        android:backgroundTint="#1976D2" android:inputType="number"/>
+            <EditText android:id="@+id/edtDescResumida"  android:layout_width="match_parent" android:layout_height="48dp" android:hint="Descrição Curta"    android:backgroundTint="#1976D2" android:inputType="text"/>
+            <EditText android:id="@+id/edtDescDetalhada" android:layout_width="match_parent" android:layout_height="48dp" android:hint="Descrição Detalhada" android:backgroundTint="#1976D2" android:inputType="text"/>
+            <EditText android:id="@+id/edtQtdBem"        android:layout_width="match_parent" android:layout_height="48dp" android:hint="Quantidade"         android:backgroundTint="#1976D2" android:inputType="number"/>
+            <EditText android:id="@+id/edtNroPlaqueta"   android:layout_width="match_parent" android:layout_height="48dp" android:hint="Nro Plaqueta"       android:backgroundTint="#1976D2" android:inputType="number"/>
+            <EditText android:id="@+id/edtNroSerieBem"   android:layout_width="match_parent" android:layout_height="48dp" android:hint="Nro Série"          android:backgroundTint="#1976D2" android:inputType="number"/>
+            <EditText android:id="@+id/edtModeloBem"     android:layout_width="match_parent" android:layout_height="48dp" android:hint="Modelo"             android:backgroundTint="#1976D2" android:inputType="text"/>
+        </LinearLayout>
+    </ScrollView>
+
+    <Button
+        android:id="@+id/btnTombar"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="Adicionar ao Inventário"
+        android:textAllCaps="true"
+        android:textColor="#FFF"
+        android:backgroundTint="#1976D2"
+        android:layout_marginTop="18dp"
+        android:elevation="4dp"
+        android:fontFamily="sans-serif-medium"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+</androidx.constraintlayout.widget.ConstraintLayout>

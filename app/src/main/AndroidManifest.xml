@@ -43,6 +43,8 @@
         <activity android:name=".LoginActivity" android:exported="true"/>
         <activity android:name=".LojaActivity"/>
         <activity android:name=".SetorActivity"/>
+        <activity android:name=".CadastroActivity" />
+        <activity android:name=".TombamentoActivity" />
     </application>
 
 

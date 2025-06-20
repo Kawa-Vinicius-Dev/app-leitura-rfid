@@ -1,55 +1,57 @@
 package com.jvconsult.rfidapp;
 
 import android.content.Context;
+import android.os.Environment;
+
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class LogHelper {
-    // Grava log em TXT (um por linha, fácil ler)
-    public static void registrarAcao(Context context, String usuario, String acao) {
-        try {
-            File file = new File(context.getExternalFilesDir(null), "log_app.txt");
-            FileWriter writer = new FileWriter(file, true);
-            String data = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
-            writer.write(data + " [" + usuario + "] " + acao + "\n");
-            writer.close();
-        } catch (Exception e) { e.printStackTrace(); }
-    }
 
-    // Grava log em CSV (para importar no Excel, etc)
-    public static void logRelatorio(
+    // Relatório consolidado CSV por loja
+    public static void logRelatorioPorLoja(
             Context context,
             String usuario,
+            String loja,
+            String setor,
             List<ItemPlanilha> itensMovidos,
             List<ItemPlanilha> itensOutrasLojas,
             List<String> epcsNaoCadastrados
     ) {
         try {
-            File file = new File(context.getExternalFilesDir(null), "log_app.txt");
-            FileWriter writer = new FileWriter(file, true);
+            // Cria a pasta da loja
+            File pastaLoja = new File(context.getExternalFilesDir(null), loja + "_RELAT");
+            if (!pastaLoja.exists()) pastaLoja.mkdirs();
+
+            // Nome do arquivo final, sempre o mesmo pra loja
+            File arquivo = new File(pastaLoja, loja + "_RELAT.csv");
+            boolean novoArquivo = !arquivo.exists();
+
+            FileWriter writer = new FileWriter(arquivo, true); // Append
+            PrintWriter pw = new PrintWriter(writer);
+
+            // Cabeçalho só se for novo arquivo!
+            if (novoArquivo) {
+                pw.println("Data/Hora,Usuário,Loja,Setor,Tipo,Desc. Item,Plaqueta,Cód. Localização");
+            }
             String data = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
-            writer.write("\n===== RELATÓRIO INVENTÁRIO - " + data + " [" + usuario + "] =====\n");
 
-            writer.write("Itens movidos para o setor selecionado:\n");
-            for (ItemPlanilha item : itensMovidos)
-                writer.write("- " + item.descresumida + " (Plaqueta: " + item.nroplaqueta + ")\n");
+            for (ItemPlanilha item : itensMovidos) {
+                pw.printf("%s,%s,%s,%s,MOVIDO,%s,%s,%s%n",
+                        data, usuario, loja, setor, item.descresumida, item.nroplaqueta, item.codlocalizacao);
+            }
+            for (ItemPlanilha item : itensOutrasLojas) {
+                pw.printf("%s,%s,%s,%s,OUTRA LOJA/SETOR,%s,%s,%s%n",
+                        data, usuario, item.loja, item.codlocalizacao, item.descresumida, item.nroplaqueta, item.codlocalizacao);
+            }
+            for (String epc : epcsNaoCadastrados) {
+                pw.printf("%s,%s,%s,%s,NAO CADASTRADO,EPC:%s,,%n",
+                        data, usuario, loja, setor, epc);
+            }
 
-            writer.write("\nItens que estavam em outras lojas/setores:\n");
-            for (ItemPlanilha item : itensOutrasLojas)
-                writer.write("- " + item.descresumida +
-                        " (Plaqueta: " + item.nroplaqueta +
-                        ", Loja: " + item.loja +
-                        ", Setor: " + item.codlocalizacao + ")\n");
+            pw.close();
 
-            writer.write("\nEPCs não cadastrados em nenhuma loja:\n");
-
-            for (String epc : epcsNaoCadastrados)
-                writer.write("- " + epc + "\n");
-
-
-            writer.write("===============================================\n");
-            writer.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
