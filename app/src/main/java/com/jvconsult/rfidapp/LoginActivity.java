@@ -41,9 +41,10 @@ public class LoginActivity extends AppCompatActivity {
 
                 startActivity(new Intent(this, MainActivity.class));
                 finish();
+            } else {
+                Toast.makeText(this, "Usuário ou senha incorretos!", Toast.LENGTH_SHORT).show();
             }
-
-        });
+    });
 
         TextView tvCadastrar = findViewById(R.id.tvCadastro);
         tvCadastrar.setOnClickListener(v -> {
