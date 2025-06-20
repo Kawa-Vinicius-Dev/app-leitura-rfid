@@ -22,13 +22,16 @@ public class CadastroActivity extends AppCompatActivity {
 
         UsuarioDAO dao = new UsuarioDAO(this);
 
+        EditText edtCodigoAdm = findViewById(R.id.edtCodigoAdm); // novo campo
+
         btnCadastrar.setOnClickListener(v -> {
             String nome = edtNome.getText().toString().trim();
             String senha = edtSenha.getText().toString().trim();
+            String codigoAdm = edtCodigoAdm.getText().toString().trim();
 
-            if (nome.isEmpty() || senha.isEmpty()) {
-                Toast.makeText(this, "Preencha todos os campos!", Toast.LENGTH_SHORT).show();
-                return;
+            String permissao = "membro";
+            if (codigoAdm.equals("ADM2025")) { // pode colocar o código que tu quiser
+                permissao = "adm";
             }
 
             if (dao.existeUsuario(nome)) {
@@ -36,7 +39,7 @@ public class CadastroActivity extends AppCompatActivity {
                 return;
             }
 
-            if (dao.cadastrarUsuario(nome, senha)) {
+            if (dao.cadastrarUsuario(nome, senha, permissao)) {
                 Toast.makeText(this, "Usuário cadastrado com sucesso!", Toast.LENGTH_SHORT).show();
                 finish(); // Volta pra tela de login
             } else {

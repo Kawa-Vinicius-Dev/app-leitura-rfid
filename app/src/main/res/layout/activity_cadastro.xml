@@ -70,6 +70,24 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="16dp"/>
 
+    <EditText
+        android:id="@+id/edtCodigoAdm"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:hint="Código de Administrador (opcional)"
+        android:backgroundTint="#1976D2"
+        android:inputType="text"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:textColor="#222"
+        android:textColorHint="#888"
+        android:fontFamily="sans-serif-medium"
+        app:layout_constraintTop_toBottomOf="@id/edtSenhaCadastro"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="12dp"/>
+
+
     <Button
         android:id="@+id/btnCadastrar"
         android:layout_width="0dp"
@@ -82,9 +100,10 @@
         android:elevation="2dp"
         android:fontFamily="sans-serif-medium"
         android:letterSpacing="0.05"
-        app:layout_constraintTop_toBottomOf="@id/edtSenhaCadastro"
+        app:layout_constraintTop_toBottomOf="@id/edtCodigoAdm"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
+
 
     <TextView
         android:id="@+id/tvVoltarLogin"

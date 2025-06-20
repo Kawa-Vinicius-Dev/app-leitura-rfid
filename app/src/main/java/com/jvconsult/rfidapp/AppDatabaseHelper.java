@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class AppDatabaseHelper extends SQLiteOpenHelper {
     private static final String DB_NAME = "app_db.sqlite";
-    private static final int DB_VERSION = 1;
+    private static final int DB_VERSION = 2;
 
     public AppDatabaseHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -15,12 +15,20 @@ public class AppDatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE usuarios (id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT UNIQUE, senha TEXT)");
+        db.execSQL(
+                "CREATE TABLE usuarios (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        "nome TEXT NOT NULL, " +
+                        "senha TEXT NOT NULL, " +
+                        "permissao TEXT NOT NULL DEFAULT 'membro'" +  // <-- Adiciona isso!
+                        ")"
+        );
     }
 
-    @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS usuarios");
-        onCreate(db);
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE usuarios ADD COLUMN permissao TEXT NOT NULL DEFAULT 'membro'");
+        }
+        // ...futuras migrações aqui
     }
 }

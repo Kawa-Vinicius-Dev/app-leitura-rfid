@@ -1,4 +1,3 @@
-// UsuarioDAO.java
 package com.jvconsult.rfidapp;
 
 import android.content.ContentValues;
@@ -14,11 +13,12 @@ public class UsuarioDAO {
         db = helper.getWritableDatabase();
     }
 
-    // Cadastrar novo usuário
-    public boolean cadastrarUsuario(String nome, String senha) {
+    // Cadastrar novo usuário (permite escolher a permissão)
+    public boolean cadastrarUsuario(String nome, String senha, String permissao) {
         ContentValues values = new ContentValues();
         values.put("nome", nome);
         values.put("senha", senha);
+        values.put("permissao", permissao); // <-- Aqui!
         long id = db.insert("usuarios", null, values);
         return id != -1;
     }
@@ -33,8 +33,9 @@ public class UsuarioDAO {
             int id = c.getInt(c.getColumnIndex("id"));
             String userNome = c.getString(c.getColumnIndex("nome"));
             String userSenha = c.getString(c.getColumnIndex("senha"));
+            String permissao = c.getString(c.getColumnIndex("permissao")); // <-- Aqui!
             c.close();
-            return new Usuario(id, userNome, userSenha);
+            return new Usuario(id, userNome, userSenha, permissao); // <-- Aqui!
         }
         c.close();
         return null;

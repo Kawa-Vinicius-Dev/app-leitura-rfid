@@ -42,7 +42,14 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
+        Button btnTombar = findViewById(R.id.btnTombar); // botão de tombar item
 
+        String permissao = getSharedPreferences("prefs", MODE_PRIVATE)
+                .getString("usuario_permissao", "membro"); // valor padrão: membro
+
+        if (!"adm".equals(permissao)) {
+            btnTombar.setVisibility(View.GONE); // Esconde o botão se não for adm
+        }
 
         btnImportarPlanilha = findViewById(R.id.btnImportarPlanilha);
         btnImportarSetor    = findViewById(R.id.btnImportarSetor);
@@ -95,6 +102,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onTombar(View v) {
+        String permissao = getSharedPreferences("prefs", MODE_PRIVATE)
+                .getString("usuario_permissao", "membro");
+
+        if (!"adm".equals(permissao)) {
+            Toast.makeText(this, "Você não tem permissão para tombar itens!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         List<ItemPlanilha> planilha = DadosGlobais.getInstance().getListaPlanilha();
         if (planilha == null || planilha.isEmpty()) {
             Toast.makeText(this, "Importe a planilha primeiro!", Toast.LENGTH_SHORT).show();
@@ -102,6 +117,7 @@ public class MainActivity extends AppCompatActivity {
         }
         startActivity(new Intent(this, TombamentoActivity.class));
     }
+
 
 
     public void onLogout(View v) {

@@ -32,18 +32,17 @@ public class LoginActivity extends AppCompatActivity {
 
             Usuario usuario = dao.autenticar(nome, senha);
             if (usuario != null) {
-                // Salva login
                 getSharedPreferences("prefs", MODE_PRIVATE)
                         .edit()
                         .putString("usuario_nome", nome)
+                        .putString("usuario_permissao", usuario.permissao) // <-- Adiciona aqui
                         .apply();
                 DadosGlobais.getInstance().setUsuario(nome);
 
                 startActivity(new Intent(this, MainActivity.class));
                 finish();
-            } else {
-                Toast.makeText(this, "Usuário ou senha inválidos!", Toast.LENGTH_SHORT).show();
             }
+
         });
 
         TextView tvCadastrar = findViewById(R.id.tvCadastro);
