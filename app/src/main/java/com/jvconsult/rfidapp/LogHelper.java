@@ -46,9 +46,10 @@ public class LogHelper {
                         data, usuario, item.loja, item.codlocalizacao, item.descresumida, item.nroplaqueta, item.codlocalizacao);
             }
             for (String epc : epcsNaoCadastrados) {
-                pw.printf("%s,%s,%s,%s,NAO CADASTRADO,EPC:%s,,%n",
+                pw.printf("%s,%s,%s,%s,NAO CADASTRADO,EPC,%s,%n",
                         data, usuario, loja, setor, epc);
             }
+
 
             pw.close();
 

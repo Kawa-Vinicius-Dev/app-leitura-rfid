@@ -9,6 +9,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.*;
 import android.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,14 +20,13 @@ import java.util.*;
 
 public class LeituraActivity extends AppCompatActivity implements IAsynchronousMessage {
 
-    private ArrayList<String> itensExibidos = new ArrayList<>();
+    private List<ItemLeituraSessao> itensSessao = new ArrayList<>();
     private LeitorRFID leitorRFID;
     private String lojaSelecionada, usuario;
     private SetorLocalizacao setorSelecionado;
-    private List<ItemPlanilha> listaPlanilha, itensFiltrados;
+    private List<ItemPlanilha> listaPlanilha;
     private List<SetorLocalizacao> listaSetores;
-    private ArrayAdapter<String> adapter;
-    private ArrayList<String> epcsNaoEncontrados = new ArrayList<>();
+    private ItemLeituraSessaoAdapter adapter;
     private HashSet<String> epcsJaProcessados = new HashSet<>();
     private boolean lendo = false;
     private TextView tvMsgLeitura, tvContadorItens;
@@ -59,17 +60,18 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
 
         construirMapaPlaquetasGlobal(listaPlanilha);
 
-        itensFiltrados = new ArrayList<>();
-        for (ItemPlanilha item : listaPlanilha)
-            if (item.loja.equals(lojaSelecionada))
-                itensFiltrados.add(item);
-
         ((TextView) findViewById(R.id.tvLojaSelecionada)).setText("Loja: " + lojaSelecionada);
         ((TextView) findViewById(R.id.tvSetorSelecionado)).setText("Setor: " + setorSelecionado.setor);
 
         ListView listView = findViewById(R.id.listaItensLidos);
-        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, itensExibidos);
+        adapter = new ItemLeituraSessaoAdapter(this, itensSessao);
         listView.setAdapter(adapter);
+
+        // Clicável: abre dialog de edição SEMPRE (encontrado ou não)
+        listView.setOnItemClickListener((parent, view, position, id) -> {
+            ItemLeituraSessao itemSessao = itensSessao.get(position);
+            abrirDialogEdicao(itemSessao, position);
+        });
 
         mpSucesso = MediaPlayer.create(this, R.raw.sucesso);
 
@@ -80,7 +82,6 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
             btnFinalizar.setTextColor(Color.WHITE);
             btnFinalizar.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FFA000")));
             btnFinalizar.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_hourglass, 0, 0, 0);
-            // Pequeno delay pra interface redesenhar antes de travar com processamento pesado
             new Handler(Looper.getMainLooper()).postDelayed(() -> {
                 new Thread(this::finalizarEExportar).start();
             }, 100);
@@ -129,14 +130,15 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         if (keyCode == 139 && lendo && leitorRFID != null) {
+            Log.d("LeituraActivity", "Chamando pararLeitura()");
             leitorRFID.pararLeitura();
             lendo = false;
             tvMsgLeitura.setText("Leitura pausada! Aperte o gatilho para ler novamente.");
-            if (!epcsNaoEncontrados.isEmpty()) mostrarDialogNaoEncontrados();
             return true;
         }
         return super.onKeyUp(keyCode, event);
     }
+
 
     @Override
     public void OutPutEPC(EPCModel model) {
@@ -149,32 +151,27 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
 
     private void processarEPC(String epc) {
         String epcLimpo = formatarEPC(epc);
-        if (!epcsLidosNaSessao.contains(epcLimpo)) epcsLidosNaSessao.add(epcLimpo);
+
+        // Só adiciona 1x cada epc na sessão
+        for (ItemLeituraSessao i : itensSessao)
+            if (i.epc.equals(epcLimpo)) return;
 
         ItemPlanilha item = encontrarItemPorEPC(epc);
-        if (item != null && item.loja.equals(lojaSelecionada) &&
-                item.codlocalizacao != null &&
-                item.codlocalizacao.equals(setorSelecionado.codlocalizacao)) {
 
-            if (!itensExibidos.contains(item.descresumida)) {
-                itensExibidos.add(item.descresumida);
-                adapter.notifyDataSetChanged();
-                atualizarContadorItens(); // Atualiza sempre que adicionar
-            }
-            atualizarLocalizacaoSeNecessario(item);
-            tvMsgLeitura.setText(msgStatusItem(item, item.descresumida));
+        ItemLeituraSessao novo = new ItemLeituraSessao(epcLimpo, item);
+        itensSessao.add(novo);
+
+        // Se não existe na planilha, deixa com campos vazios, pronto pra editar
+        adapter.notifyDataSetChanged();
+        atualizarContadorItens();
+
+        // Feedback visual/sonoro
+        if (item != null && item.loja.equals(lojaSelecionada)) {
+            tvMsgLeitura.setText("Encontrado: " + item.descresumida);
         } else {
-            String infoNaoEncontrado = "Não encontrado: " + formatarEPC(epc);
-            if (!itensExibidos.contains(infoNaoEncontrado)) {
-                itensExibidos.add(infoNaoEncontrado);
-                adapter.notifyDataSetChanged();
-                atualizarContadorItens(); // Atualiza se adicionar info
-            }
-            if (!epcsNaoEncontrados.contains(epc)) epcsNaoEncontrados.add(epc);
-            tvMsgLeitura.setText("Item " + formatarEPC(epc) + " não pertence a esta loja/setor!");
+            tvMsgLeitura.setText("Novo EPC: " + epcLimpo);
         }
     }
-
 
     private ItemPlanilha encontrarItemPorEPC(String epc) {
         if (mapPlaquetasGlobal == null || epc == null) return null;
@@ -182,61 +179,25 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         return mapPlaquetasGlobal.get(epcLido);
     }
 
-    private void atualizarLocalizacaoSeNecessario(ItemPlanilha item) {
-        if (!setorSelecionado.codlocalizacao.equals(item.codlocalizacao))
-            item.codlocalizacao = setorSelecionado.codlocalizacao;
-    }
-
-    private String msgStatusItem(ItemPlanilha item, String info) {
-        if (item.codlocalizacao == null || item.codlocalizacao.isEmpty())
-            return "Item " + info + " sem setor definido. Atribuído para " + setorSelecionado.setor;
-        if (setorSelecionado.codlocalizacao.equals(item.codlocalizacao))
-            return "Item " + info + " já estava no setor " + setorSelecionado.setor;
-        return "Item " + info + " movido para " + setorSelecionado.setor;
-    }
-
-    private void mostrarDialogNaoEncontrados() {
-        StringBuilder sb = new StringBuilder();
-        for (String epc : epcsNaoEncontrados) sb.append(formatarEPC(epc)).append("\n");
-        runOnUiThread(() -> new AlertDialog.Builder(this)
-                .setTitle("EPCs não encontrados")
-                .setMessage("Os seguintes EPCs não foram encontrados:\n\n" + sb)
-                .setPositiveButton("Fechar", (d, w) -> epcsNaoEncontrados.clear())
-                .show());
-    }
-
-    public static String formatarEPC(String epc) {
-        if (epc == null) return "";
-        String ultimos = epc.length() > 7 ? epc.substring(epc.length() - 7) : epc;
-        return ultimos.replaceFirst("^0+(?!$)", "");
-    }
-
     private void atualizarContadorItens() {
-        int total = 0;
+        int total = 0, lidos = 0;
         Set<String> nomesItensSetor = new HashSet<>();
-
         for (ItemPlanilha item : listaPlanilha) {
-            if (
-                    item.loja.equals(lojaSelecionada)
-                            && item.codlocalizacao != null
-                            && item.codlocalizacao.equals(setorSelecionado.codlocalizacao)
+            if (item.loja.equals(lojaSelecionada)
+                    && item.codlocalizacao != null
+                    && item.codlocalizacao.equals(setorSelecionado.codlocalizacao)
             ) {
                 total++;
                 nomesItensSetor.add(item.descresumida);
             }
         }
-
-        int lidos = 0;
-        for (String exibido : itensExibidos) {
-            if (nomesItensSetor.contains(exibido)) {
+        for (ItemLeituraSessao lido : itensSessao) {
+            if (lido.item != null && nomesItensSetor.contains(lido.item.descresumida)) {
                 lidos++;
             }
         }
-
         tvContadorItens.setText("Itens lidos: " + lidos + " / " + total);
     }
-
-
 
     // Processo pesado isolado da UI
     private void finalizarEExportar() {
@@ -244,25 +205,25 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         List<ItemPlanilha> itensOutrasLojas = new ArrayList<>();
         List<String> epcsNaoCadastrados = new ArrayList<>();
 
-        for (String epcLido : epcsLidosNaSessao) {
-            boolean encontrou = false;
-            for (ItemPlanilha item : listaPlanilha) {
-                String plaqLimpo = item.nroplaqueta != null ? item.nroplaqueta.trim().replaceFirst("^0+(?!$)", "") : "";
-                if (plaqLimpo.equals(epcLido)) {
-                    encontrou = true;
-                    if (item.loja.equals(lojaSelecionada)) {
-                        if (!item.codlocalizacao.equals(setorSelecionado.codlocalizacao)) {
-                            item.codlocalizacao = setorSelecionado.codlocalizacao;
-                        }
-                        itensMovidos.add(item);
-                    } else {
-                        itensOutrasLojas.add(item);
+        for (ItemLeituraSessao lido : itensSessao) {
+            if (lido.item == null) {
+                // Aqui sim: só adiciona quem continua sem cadastro ao salvar!
+                epcsNaoCadastrados.add(lido.epc);
+                continue;
+            }
+            String plaqLimpo = lido.item.nroplaqueta != null ? lido.item.nroplaqueta.trim().replaceFirst("^0+(?!$)", "") : "";
+            if (plaqLimpo.equals(lido.epc)) {
+                if (lido.item.loja.equals(lojaSelecionada)) {
+                    if (!lido.item.codlocalizacao.equals(setorSelecionado.codlocalizacao)) {
+                        lido.item.codlocalizacao = setorSelecionado.codlocalizacao;
                     }
-                    break;
+                    itensMovidos.add(lido.item);
+                } else {
+                    itensOutrasLojas.add(lido.item);
                 }
             }
-            if (!encontrou) epcsNaoCadastrados.add(epcLido);
         }
+
 
         LogHelper.logRelatorioPorLoja(
                 this,
@@ -296,5 +257,127 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         if (leitorRFID != null) leitorRFID.fechar();
         if (mpSucesso != null) mpSucesso.release();
         super.onDestroy();
+    }
+
+    // --- Dialog de edição para qualquer item lido ---
+    private void abrirDialogEdicao(ItemLeituraSessao sessao, int pos) {
+        LayoutInflater inflater = LayoutInflater.from(this);
+        View view = inflater.inflate(R.layout.dialog_editar_item_lido, null);
+
+        EditText edtDesc = view.findViewById(R.id.edtDescResumidaDialog);
+        Spinner spinnerLoja = view.findViewById(R.id.spinnerLojaDialog);
+        Spinner spinnerSetor = view.findViewById(R.id.spinnerSetorDialog);
+        TextView tvPlaqueta = view.findViewById(R.id.tvPlaquetaDialog);
+        Button btnRemover = view.findViewById(R.id.btnRemoverDialog);
+        Button btnSalvar = view.findViewById(R.id.btnSalvarDialog);
+        Button btnCancelar = view.findViewById(R.id.btnCancelarDialog);
+
+        // Preenche campos
+        edtDesc.setText(sessao.item != null ? sessao.item.descresumida : "");
+        tvPlaqueta.setText("Plaqueta: " + sessao.epc);
+
+        // Carrega lojas
+        List<String> lojas = new ArrayList<>();
+        for (ItemPlanilha item : listaPlanilha) {
+            if (item.loja != null && !lojas.contains(item.loja)) lojas.add(item.loja);
+        }
+        ArrayAdapter<String> lojaAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, lojas);
+        lojaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerLoja.setAdapter(lojaAdapter);
+
+        // Seleciona loja correta
+        String lojaAtual = sessao.item != null ? sessao.item.loja : lojaSelecionada;
+        int lojaIndex = lojas.indexOf(lojaAtual);
+        if (lojaIndex >= 0) spinnerLoja.setSelection(lojaIndex);
+
+        // Carrega setores conforme loja selecionada
+        spinnerLoja.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                // Não filtra por loja, só mostra todos (adapte se quiser filtrar depois)
+                List<String> setores = new ArrayList<>();
+                for (SetorLocalizacao s : listaSetores) {
+                    setores.add(s.setor);
+                }
+                ArrayAdapter<String> setorAdapter = new ArrayAdapter<>(LeituraActivity.this, android.R.layout.simple_spinner_item, setores);
+                setorAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                spinnerSetor.setAdapter(setorAdapter);
+
+                // Seleciona setor correto
+                String setorAtual = sessao.item != null ? sessao.item.codlocalizacao : setorSelecionado.setor;
+                int setorIndex = setores.indexOf(setorAtual);
+                if (setorIndex >= 0) spinnerSetor.setSelection(setorIndex);
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
+        });
+        // Força disparar seleção do setor
+        spinnerLoja.post(() -> spinnerLoja.setSelection(lojaIndex >= 0 ? lojaIndex : 0));
+
+        // Cria dialog principal
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(view)
+                .setCancelable(false)
+                .create();
+
+        // Salvar com confirmação
+        btnSalvar.setOnClickListener(v -> {
+            new AlertDialog.Builder(this)
+                    .setTitle("Confirmar alteração")
+                    .setMessage("Tem certeza que deseja salvar as alterações deste item?")
+                    .setPositiveButton("Salvar", (d, w) -> {
+                        String novaDesc = edtDesc.getText().toString();
+                        String novaLoja = (String) spinnerLoja.getSelectedItem();
+                        String novoSetor = (String) spinnerSetor.getSelectedItem();
+
+                        if (sessao.item == null) {
+                            ItemPlanilha novoItem = new ItemPlanilha(
+                                    novaLoja, "", "", novoSetor, "", "",
+                                    novaDesc, "", "", sessao.epc, "", ""
+                            );
+                            listaPlanilha.add(novoItem);
+                            sessao.item = novoItem;
+                            mapPlaquetasGlobal.put(sessao.epc, novoItem);
+                            sessao.encontrado = true;
+                        } else {
+                            sessao.item.descresumida = novaDesc;
+                            sessao.item.loja = novaLoja;
+                            sessao.item.codlocalizacao = novoSetor;
+                        }
+                        adapter.notifyDataSetChanged();
+                        atualizarContadorItens();
+                        dialog.dismiss();
+                    })
+                    .setNegativeButton("Cancelar", null)
+                    .show();
+        });
+
+        // Remover com confirmação
+        btnRemover.setOnClickListener(v -> {
+            new AlertDialog.Builder(this)
+                    .setTitle("Remover item")
+                    .setMessage("Tem certeza que deseja remover esse item da lista?\n\nEsta ação não pode ser desfeita.")
+                    .setPositiveButton("Remover", (d, w) -> {
+                        itensSessao.remove(pos);
+                        adapter.notifyDataSetChanged();
+                        dialog.dismiss();
+                        atualizarContadorItens();
+                    })
+                    .setNegativeButton("Cancelar", null)
+                    .show();
+        });
+
+        btnCancelar.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
+    }
+
+
+
+
+    // Mesma função de antes pra tratar epc
+    public static String formatarEPC(String epc) {
+        if (epc == null) return "";
+        String ultimos = epc.length() > 7 ? epc.substring(epc.length() - 7) : epc;
+        return ultimos.replaceFirst("^0+(?!$)", "");
     }
 }

@@ -88,17 +88,17 @@
             android:layout_marginTop="14dp"/>
 
         <Button
-            android:id="@+id/btnTombar"
+            android:id="@+id/btnGerenciarUsuarios"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:text="➕ Tombar Item"
+            android:text="👤 Gerenciar Usuários"
             android:textSize="16sp"
             android:fontFamily="sans-serif-medium"
-            android:backgroundTint="#1976D2"
+            android:backgroundTint="#FFA000"
             android:textColor="#FFF"
             android:elevation="4dp"
-            android:layout_marginTop="14dp"
-            android:onClick="onTombar"/>
+            android:layout_marginTop="16dp"
+            android:visibility="gone" />
 
         <Button
             android:id="@+id/btnLogout"
@@ -111,11 +111,6 @@
             android:textColor="#FFF"
             android:layout_marginTop="22dp"
             android:elevation="3dp"/>
-
-
-
-
-
 
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

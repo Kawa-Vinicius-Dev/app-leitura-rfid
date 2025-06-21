@@ -4,6 +4,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UsuarioDAO {
     private SQLiteDatabase db;
@@ -13,17 +15,15 @@ public class UsuarioDAO {
         db = helper.getWritableDatabase();
     }
 
-    // Cadastrar novo usuário (permite escolher a permissão)
     public boolean cadastrarUsuario(String nome, String senha, String permissao) {
         ContentValues values = new ContentValues();
         values.put("nome", nome);
         values.put("senha", senha);
-        values.put("permissao", permissao); // <-- Aqui!
+        values.put("permissao", permissao);
         long id = db.insert("usuarios", null, values);
         return id != -1;
     }
 
-    // Buscar usuário (login)
     public Usuario autenticar(String nome, String senha) {
         Cursor c = db.rawQuery(
                 "SELECT * FROM usuarios WHERE nome=? AND senha=?",
@@ -33,15 +33,14 @@ public class UsuarioDAO {
             int id = c.getInt(c.getColumnIndex("id"));
             String userNome = c.getString(c.getColumnIndex("nome"));
             String userSenha = c.getString(c.getColumnIndex("senha"));
-            String permissao = c.getString(c.getColumnIndex("permissao")); // <-- Aqui!
+            String permissao = c.getString(c.getColumnIndex("permissao"));
             c.close();
-            return new Usuario(id, userNome, userSenha, permissao); // <-- Aqui!
+            return new Usuario(id, userNome, userSenha, permissao);
         }
         c.close();
         return null;
     }
 
-    // Verifica se já existe
     public boolean existeUsuario(String nome) {
         Cursor c = db.rawQuery(
                 "SELECT id FROM usuarios WHERE nome=?",
@@ -50,5 +49,41 @@ public class UsuarioDAO {
         boolean exists = c.moveToFirst();
         c.close();
         return exists;
+    }
+
+    // NOVOS MÉTODOS
+
+    public String getPermissaoUsuario(String nome) {
+        Cursor c = db.rawQuery(
+                "SELECT permissao FROM usuarios WHERE nome=?",
+                new String[]{nome}
+        );
+        String permissao = "membro";
+        if (c.moveToFirst()) {
+            permissao = c.getString(0);
+        }
+        c.close();
+        return permissao;
+    }
+
+    // Lista todos usuários (inclusive admins)
+    public List<String> getTodosUsuarios() {
+        List<String> lista = new ArrayList<>();
+        Cursor c = db.rawQuery("SELECT nome FROM usuarios", null);
+        while (c.moveToNext()) {
+            lista.add(c.getString(0));
+        }
+        c.close();
+        return lista;
+    }
+
+
+    public void removerUsuario(String nome) {
+        db.delete("usuarios", "nome=?", new String[]{nome});
+    }
+
+
+    public void fechar() {
+        db.close();
     }
 }

@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
     private List<ItemPlanilha> listaPlanilha = new ArrayList<>();
     private List<SetorLocalizacao> listaSetores = new ArrayList<>();
 
-    private Button btnImportarPlanilha, btnImportarSetor;
+    private Button btnImportarPlanilha, btnImportarSetor, btnGerenciarUsuarios;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,20 +42,24 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        Button btnTombar = findViewById(R.id.btnTombar); // botão de tombar item
-
-        String permissao = getSharedPreferences("prefs", MODE_PRIVATE)
-                .getString("usuario_permissao", "membro"); // valor padrão: membro
-
-        if (!"adm".equals(permissao)) {
-            btnTombar.setVisibility(View.GONE); // Esconde o botão se não for adm
-        }
-
         btnImportarPlanilha = findViewById(R.id.btnImportarPlanilha);
         btnImportarSetor    = findViewById(R.id.btnImportarSetor);
-        Button btnLogout = findViewById(R.id.btnLogout);
+        Button btnLogout    = findViewById(R.id.btnLogout);
+        btnGerenciarUsuarios = findViewById(R.id.btnGerenciarUsuarios);
+
         btnLogout.setOnClickListener(this::onLogout);
 
+        // Controle do botão Gerenciar Usuários
+        UsuarioDAO dao = new UsuarioDAO(this);
+        String permissao = dao.getPermissaoUsuario(nome);
+        if ("adm".equals(permissao)) {
+            btnGerenciarUsuarios.setVisibility(View.VISIBLE);
+            btnGerenciarUsuarios.setOnClickListener(v -> {
+                startActivity(new Intent(this, GerenciarUsuariosActivity.class));
+            });
+        } else {
+            btnGerenciarUsuarios.setVisibility(View.GONE);
+        }
 
         importarPlanilhaLauncher = registerForActivityResult(
                 new ActivityResultContracts.GetContent(),
@@ -101,25 +105,6 @@ public class MainActivity extends AppCompatActivity {
         startActivity(new Intent(this, LojaActivity.class));
     }
 
-    public void onTombar(View v) {
-        String permissao = getSharedPreferences("prefs", MODE_PRIVATE)
-                .getString("usuario_permissao", "membro");
-
-        if (!"adm".equals(permissao)) {
-            Toast.makeText(this, "Você não tem permissão para tombar itens!", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        List<ItemPlanilha> planilha = DadosGlobais.getInstance().getListaPlanilha();
-        if (planilha == null || planilha.isEmpty()) {
-            Toast.makeText(this, "Importe a planilha primeiro!", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        startActivity(new Intent(this, TombamentoActivity.class));
-    }
-
-
-
     public void onLogout(View v) {
         new AlertDialog.Builder(this)
                 .setTitle("Sair do aplicativo")
@@ -136,6 +121,4 @@ public class MainActivity extends AppCompatActivity {
                 .setNegativeButton("Cancelar", null)
                 .show();
     }
-
-
 }

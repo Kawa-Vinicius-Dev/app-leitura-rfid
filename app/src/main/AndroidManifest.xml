@@ -44,7 +44,8 @@
         <activity android:name=".LojaActivity"/>
         <activity android:name=".SetorActivity"/>
         <activity android:name=".CadastroActivity" />
-        <activity android:name=".TombamentoActivity" />
+        <activity android:name=".GerenciarUsuariosActivity"/>
+
     </application>
 
 
