@@ -31,7 +31,6 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
     private boolean lendo = false;
     private TextView tvMsgLeitura, tvContadorItens;
     private HashMap<String, ItemPlanilha> mapPlaquetasGlobal;
-    private ArrayList<String> epcsLidosNaSessao = new ArrayList<>();
     private int potenciaAtual = 20;
     private Button btnFinalizar;
     private MediaPlayer mpSucesso;
@@ -42,8 +41,8 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         setContentView(R.layout.activity_leitura_rfid);
 
         tvContadorItens = findViewById(R.id.tvContadorItens);
-        tvMsgLeitura    = findViewById(R.id.tvMsgLeitura);
-        btnFinalizar    = findViewById(R.id.btnFinalizar);
+        tvMsgLeitura = findViewById(R.id.tvMsgLeitura);
+        btnFinalizar = findViewById(R.id.btnFinalizar);
 
         setorSelecionado = DadosGlobais.getInstance().getSetorSelecionado();
         if (setorSelecionado == null) {
@@ -51,10 +50,10 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
             finish();
             return;
         }
-        listaPlanilha   = DadosGlobais.getInstance().getListaPlanilha();
-        listaSetores    = DadosGlobais.getInstance().getListaSetores();
+        listaPlanilha = DadosGlobais.getInstance().getListaPlanilha();
+        listaSetores = DadosGlobais.getInstance().getListaSetores();
         lojaSelecionada = DadosGlobais.getInstance().getLojaSelecionada();
-        usuario         = DadosGlobais.getInstance().getUsuario();
+        usuario = DadosGlobais.getInstance().getUsuario();
         if (usuario == null)
             usuario = getSharedPreferences("prefs", MODE_PRIVATE).getString("usuario_nome", "Usuário");
 
@@ -94,13 +93,20 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         tvPotencia.setText("Potência: " + potenciaAtual);
         sbPotencia.setProgress(potenciaAtual);
         sbPotencia.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 potenciaAtual = progress;
                 tvPotencia.setText("Potência: " + potenciaAtual);
                 if (leitorRFID != null) leitorRFID.setPotencia(potenciaAtual);
             }
-            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
-            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
         });
     }
 
@@ -139,6 +145,11 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         return super.onKeyUp(keyCode, event);
     }
 
+    public static String formatarEPC(String epc) {
+        if (epc == null) return "";
+        String ultimos = epc.length() > 7 ? epc.substring(epc.length() - 7) : epc;
+        return ultimos.replaceFirst("^0+(?!$)", "");
+    }
 
     @Override
     public void OutPutEPC(EPCModel model) {
@@ -152,7 +163,6 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
     private void processarEPC(String epc) {
         String epcLimpo = formatarEPC(epc);
 
-        // Só adiciona 1x cada epc na sessão
         for (ItemLeituraSessao i : itensSessao)
             if (i.epc.equals(epcLimpo)) return;
 
@@ -161,11 +171,9 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         ItemLeituraSessao novo = new ItemLeituraSessao(epcLimpo, item);
         itensSessao.add(novo);
 
-        // Se não existe na planilha, deixa com campos vazios, pronto pra editar
         adapter.notifyDataSetChanged();
         atualizarContadorItens();
 
-        // Feedback visual/sonoro
         if (item != null && item.loja.equals(lojaSelecionada)) {
             tvMsgLeitura.setText("Encontrado: " + item.descresumida);
         } else {
@@ -265,7 +273,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         View view = inflater.inflate(R.layout.dialog_editar_item_lido, null);
 
         EditText edtDesc = view.findViewById(R.id.edtDescResumidaDialog);
-        Spinner spinnerLoja = view.findViewById(R.id.spinnerLojaDialog);
+        TextView tvLoja = view.findViewById(R.id.tvLojaDialog);
         Spinner spinnerSetor = view.findViewById(R.id.spinnerSetorDialog);
         TextView tvPlaqueta = view.findViewById(R.id.tvPlaquetaDialog);
         Button btnRemover = view.findViewById(R.id.btnRemoverDialog);
@@ -276,42 +284,25 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         edtDesc.setText(sessao.item != null ? sessao.item.descresumida : "");
         tvPlaqueta.setText("Plaqueta: " + sessao.epc);
 
-        // Carrega lojas
-        List<String> lojas = new ArrayList<>();
-        for (ItemPlanilha item : listaPlanilha) {
-            if (item.loja != null && !lojas.contains(item.loja)) lojas.add(item.loja);
-        }
-        ArrayAdapter<String> lojaAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, lojas);
-        lojaAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerLoja.setAdapter(lojaAdapter);
-
-        // Seleciona loja correta
+        // Nome da loja (apenas visual, não editável)
         String lojaAtual = sessao.item != null ? sessao.item.loja : lojaSelecionada;
-        int lojaIndex = lojas.indexOf(lojaAtual);
-        if (lojaIndex >= 0) spinnerLoja.setSelection(lojaIndex);
+        tvLoja.setText("Loja: " + lojaAtual);
 
-        // Carrega setores conforme loja selecionada
-        spinnerLoja.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                // Não filtra por loja, só mostra todos (adapte se quiser filtrar depois)
-                List<String> setores = new ArrayList<>();
-                for (SetorLocalizacao s : listaSetores) {
-                    setores.add(s.setor);
-                }
-                ArrayAdapter<String> setorAdapter = new ArrayAdapter<>(LeituraActivity.this, android.R.layout.simple_spinner_item, setores);
-                setorAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                spinnerSetor.setAdapter(setorAdapter);
+        // Carrega setores (exibe nome, mas salva o código)
+        List<String> nomesSetores = new ArrayList<>();
+        for (SetorLocalizacao s : listaSetores) {
+            nomesSetores.add(s.setor);
+        }
+        ArrayAdapter<String> setorAdapter = new ArrayAdapter<>(LeituraActivity.this, android.R.layout.simple_spinner_item, nomesSetores);
+        setorAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerSetor.setAdapter(setorAdapter);
 
-                // Seleciona setor correto
-                String setorAtual = sessao.item != null ? sessao.item.codlocalizacao : setorSelecionado.setor;
-                int setorIndex = setores.indexOf(setorAtual);
-                if (setorIndex >= 0) spinnerSetor.setSelection(setorIndex);
-            }
-            @Override public void onNothingSelected(AdapterView<?> parent) {}
-        });
-        // Força disparar seleção do setor
-        spinnerLoja.post(() -> spinnerLoja.setSelection(lojaIndex >= 0 ? lojaIndex : 0));
+        // Seleciona setor atual (busca nome pelo código)
+        String setorAtual = sessao.item != null
+                ? buscarNomeSetorPorCodigo(sessao.item.codlocalizacao)
+                : setorSelecionado.setor;
+        int setorIndex = nomesSetores.indexOf(setorAtual);
+        if (setorIndex >= 0) spinnerSetor.setSelection(setorIndex);
 
         // Cria dialog principal
         AlertDialog dialog = new AlertDialog.Builder(this)
@@ -326,12 +317,22 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                     .setMessage("Tem certeza que deseja salvar as alterações deste item?")
                     .setPositiveButton("Salvar", (d, w) -> {
                         String novaDesc = edtDesc.getText().toString();
-                        String novaLoja = (String) spinnerLoja.getSelectedItem();
-                        String novoSetor = (String) spinnerSetor.getSelectedItem();
+                        String novoSetorNome = (String) spinnerSetor.getSelectedItem();
+                        String novoSetorCodigo = buscarCodigoSetorPorNome(novoSetorNome);
+
+                        // Salva dados antigos antes de alterar
+                        ItemPlanilha itemAntigo = null;
+                        if (sessao.item != null) {
+                            itemAntigo = new ItemPlanilha(
+                                    sessao.item.loja, sessao.item.sqbem, sessao.item.codgrupo, sessao.item.codlocalizacao, sessao.item.nrobem,
+                                    sessao.item.nroincorp, sessao.item.descresumida, sessao.item.descdetalhada, sessao.item.qtdbem,
+                                    sessao.item.nroplaqueta, sessao.item.nroseriebem, sessao.item.modelobem
+                            );
+                        }
 
                         if (sessao.item == null) {
                             ItemPlanilha novoItem = new ItemPlanilha(
-                                    novaLoja, "", "", novoSetor, "", "",
+                                    lojaAtual, "", "", novoSetorCodigo, "", "",
                                     novaDesc, "", "", sessao.epc, "", ""
                             );
                             listaPlanilha.add(novoItem);
@@ -340,9 +341,32 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                             sessao.encontrado = true;
                         } else {
                             sessao.item.descresumida = novaDesc;
-                            sessao.item.loja = novaLoja;
-                            sessao.item.codlocalizacao = novoSetor;
+                            sessao.item.loja = lojaAtual;
+                            sessao.item.codlocalizacao = novoSetorCodigo;
                         }
+
+                        // Verifica alterações (só registra se editou algo)
+                        StringBuilder alteracoes = new StringBuilder();
+                        if (itemAntigo != null) {
+                            if (!itemAntigo.descresumida.equals(novaDesc))
+                                alteracoes.append("Descrição: ").append(itemAntigo.descresumida).append(" -> ").append(novaDesc).append("; ");
+                            if (!itemAntigo.codlocalizacao.equals(novoSetorCodigo))
+                                alteracoes.append("Setor: ").append(itemAntigo.codlocalizacao).append(" -> ").append(novoSetorCodigo).append("; ");
+                            // Tu pode adicionar mais campos se quiser rastrear mais alterações!
+                        }
+
+                        if (alteracoes.length() > 0) {
+                            LogHelper.logEdicaoItem(
+                                    getApplicationContext(),
+                                    usuario,
+                                    lojaAtual,
+                                    novoSetorCodigo,
+                                    itemAntigo,
+                                    sessao.item,
+                                    alteracoes.toString()
+                            );
+                        }
+
                         adapter.notifyDataSetChanged();
                         atualizarContadorItens();
                         dialog.dismiss();
@@ -371,13 +395,22 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         dialog.show();
     }
 
+    // Métodos auxiliares pra lidar com código e nome do setor
+    private String buscarNomeSetorPorCodigo(String codlocalizacao) {
+        for (SetorLocalizacao s : listaSetores) {
+            if (s.codlocalizacao.equals(codlocalizacao)) {
+                return s.setor;
+            }
+        }
+        return codlocalizacao; // fallback se não achar
+    }
 
-
-
-    // Mesma função de antes pra tratar epc
-    public static String formatarEPC(String epc) {
-        if (epc == null) return "";
-        String ultimos = epc.length() > 7 ? epc.substring(epc.length() - 7) : epc;
-        return ultimos.replaceFirst("^0+(?!$)", "");
+    private String buscarCodigoSetorPorNome(String nomeSetor) {
+        for (SetorLocalizacao s : listaSetores) {
+            if (s.setor.equals(nomeSetor)) {
+                return s.codlocalizacao;
+            }
+        }
+        return nomeSetor; // fallback se não achar
     }
 }

@@ -17,7 +17,6 @@ public class LoginActivity extends AppCompatActivity {
         EditText edtNome = findViewById(R.id.edtNomeUsuario);
         EditText edtSenha = findViewById(R.id.edtSenha);
         Button btnEntrar = findViewById(R.id.btnEntrar);
-        Button btnCadastrar = findViewById(R.id.btnCadastrar);
 
         UsuarioDAO dao = new UsuarioDAO(this);
 
