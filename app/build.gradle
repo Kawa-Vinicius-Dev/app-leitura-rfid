@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace 'com.jvconsult.rfidapp'
+    namespace 'com.rktec.rfidapp'
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.jvconsult.rfidapp"
+        applicationId "com.rktec.rfidapp"
         minSdk 24
         targetSdk 35
         versionCode 1
