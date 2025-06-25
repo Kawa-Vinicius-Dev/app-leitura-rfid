@@ -101,12 +101,9 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
             }
 
             @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
-
+            public void onStartTrackingTouch(SeekBar seekBar) { }
             @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-            }
+            public void onStopTrackingTouch(SeekBar seekBar) { }
         });
     }
 
@@ -212,10 +209,17 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         List<ItemPlanilha> itensMovidos = new ArrayList<>();
         List<ItemPlanilha> itensOutrasLojas = new ArrayList<>();
         List<String> epcsNaoCadastrados = new ArrayList<>();
+        List<ItemLeituraSessao> itensNaoCadastradosEditados = new ArrayList<>();
 
         for (ItemLeituraSessao lido : itensSessao) {
+            // Se foi editado (ou seja, tem um item "fake") e NÃO está na planilha, logar só agora!
+            boolean naoEstaNaPlanilha = (lido.item == null) || !listaPlanilha.contains(lido.item);
+            boolean editou = lido.item != null && lido.item.descresumida != null && !lido.item.descresumida.isEmpty();
+            if (naoEstaNaPlanilha && editou) {
+                itensNaoCadastradosEditados.add(lido);
+                continue; // Não coloca como epcsNaoCadastrados, pois foi editado!
+            }
             if (lido.item == null) {
-                // Aqui sim: só adiciona quem continua sem cadastro ao salvar!
                 epcsNaoCadastrados.add(lido.epc);
                 continue;
             }
@@ -232,6 +236,24 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
             }
         }
 
+        // LOGA EDIÇÕES DE ITENS NÃO CADASTRADOS (só aqui! Só 1x!)
+        for (ItemLeituraSessao editado : itensNaoCadastradosEditados) {
+            ItemPlanilha fake = editado.item;
+            StringBuilder alteracoes = new StringBuilder();
+            alteracoes.append("Cadastro/edição de item não encontrado antes da finalização; ");
+            alteracoes.append("Descrição final: ").append(fake.descresumida).append("; ");
+            alteracoes.append("Setor final: ").append(fake.codlocalizacao).append("; ");
+
+            LogHelper.logEdicaoItem(
+                    this,
+                    usuario,
+                    lojaSelecionada,
+                    fake.codlocalizacao,
+                    null,
+                    fake,
+                    alteracoes.toString()
+            );
+        }
 
         LogHelper.logRelatorioPorLoja(
                 this,
@@ -295,6 +317,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
 
         dialog.show();
     }
+
     // --- Dialog de edição para qualquer item lido ---
     private void abrirDialogEdicao(ItemLeituraSessao sessao, int pos) {
         LayoutInflater inflater = LayoutInflater.from(this);
@@ -361,20 +384,22 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                         }
 
                         if (sessao.item == null) {
-                            ItemPlanilha novoItem = new ItemPlanilha(
+                            // Só atualiza o objeto visual na lista, não salva na planilha real, nem loga agora!
+                            ItemPlanilha itemNovoFake = new ItemPlanilha(
                                     lojaAtual, "", "", novoSetorCodigo, "", "",
                                     novaDesc, "", "", sessao.epc, "", ""
                             );
-                            listaPlanilha.add(novoItem);
-                            sessao.item = novoItem;
-                            mapPlaquetasGlobal.put(sessao.epc, novoItem);
+                            sessao.item = itemNovoFake;
                             sessao.encontrado = true;
+                            adapter.notifyDataSetChanged();
+                            atualizarContadorItens();
+                            dialog.dismiss();
+                            return;
                         } else {
                             sessao.item.descresumida = novaDesc;
                             sessao.item.loja = lojaAtual;
                             sessao.item.codlocalizacao = novoSetorCodigo;
                         }
-
                         // Verifica alterações (só registra se editou algo)
                         StringBuilder alteracoes = new StringBuilder();
                         if (itemAntigo != null) {
