@@ -1,30 +1,65 @@
 package com.rktec.rfidapp;
 
-import android.content.Context;
-import android.view.*;
-import android.widget.*;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
-public class ItemLeituraSessaoAdapter extends ArrayAdapter<ItemLeituraSessao> {
+public class ItemLeituraSessaoAdapter extends RecyclerView.Adapter<ItemLeituraSessaoAdapter.ViewHolder> {
 
-    public ItemLeituraSessaoAdapter(Context context, List<ItemLeituraSessao> itens) {
-        super(context, 0, itens);
+    private List<ItemLeituraSessao> itens;
+    private OnItemClickListener listener;
+
+    public interface OnItemClickListener {
+        void onItemClick(int position);
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
+    }
+
+    public ItemLeituraSessaoAdapter(List<ItemLeituraSessao> itens) {
+        this.itens = itens;
+    }
+
+    @NonNull
+    @Override
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(android.R.layout.simple_list_item_1, parent, false);
+        return new ViewHolder(view, listener);
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        ItemLeituraSessao sessao = getItem(position);
-        if (convertView == null) {
-            convertView = LayoutInflater.from(getContext()).inflate(android.R.layout.simple_list_item_1, parent, false);
-        }
-        TextView tv = (TextView) convertView.findViewById(android.R.id.text1);
-
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        ItemLeituraSessao sessao = itens.get(position);
         if (sessao.encontrado && sessao.item != null) {
-            tv.setText(sessao.item.descresumida + " (" + sessao.item.codlocalizacao + ")");
+            holder.tv.setText(sessao.item.descresumida + " (" + sessao.item.codlocalizacao + ")");
         } else {
-            tv.setText("Não encontrado: " + sessao.epc);
+            holder.tv.setText("Não encontrado: " + sessao.epc);
         }
+    }
 
-        return convertView;
+    @Override
+    public int getItemCount() {
+        return itens.size();
+    }
+
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+        TextView tv;
+        public ViewHolder(@NonNull View itemView, final OnItemClickListener listener) {
+            super(itemView);
+            tv = itemView.findViewById(android.R.id.text1);
+            itemView.setOnClickListener(v -> {
+                if (listener != null) {
+                    int pos = getAdapterPosition();
+                    if (pos != RecyclerView.NO_POSITION)
+                        listener.onItemClick(pos);
+                }
+            });
+        }
     }
 }

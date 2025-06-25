@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -68,13 +69,23 @@ public class MainActivity extends AppCompatActivity {
                     listaPlanilha = ImportadorPlanilha.importar(this, uri);
                     DadosGlobais.getInstance().setListaPlanilha(listaPlanilha);
 
-                    btnImportarPlanilha.setText("Planilha OK");
-                    btnImportarPlanilha.setEnabled(false);
-                    btnImportarPlanilha.setTextColor(Color.WHITE);
-                    btnImportarPlanilha.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FFB600")));
-                    btnImportarPlanilha.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_check,0,0,0);
+                    if (listaPlanilha == null || listaPlanilha.size() == 0) {
+                        btnImportarPlanilha.setText("Importar Planilha");
+                        btnImportarPlanilha.setEnabled(true);
+                        btnImportarPlanilha.setTextColor(Color.parseColor("#222222"));
+                        btnImportarPlanilha.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FFEB3B")));
+                        btnImportarPlanilha.setCompoundDrawablesWithIntrinsicBounds(0,0,0,0);
 
-                    Toast.makeText(this,"Importados "+listaPlanilha.size()+" itens!",Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Erro: Nenhum item importado!\nVerifique a planilha.", Toast.LENGTH_LONG).show();
+                    } else {
+                        btnImportarPlanilha.setText("Planilha OK");
+                        btnImportarPlanilha.setEnabled(false);
+                        btnImportarPlanilha.setTextColor(Color.WHITE);
+                        btnImportarPlanilha.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FFB600")));
+                        btnImportarPlanilha.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_check,0,0,0);
+
+                        Toast.makeText(this, "Importados "+listaPlanilha.size()+" itens!", Toast.LENGTH_SHORT).show();
+                    }
                 });
 
         importarSetorLauncher = registerForActivityResult(
@@ -92,6 +103,12 @@ public class MainActivity extends AppCompatActivity {
 
                     Toast.makeText(this,"Importados "+listaSetores.size()+" setores!",Toast.LENGTH_SHORT).show();
                 });
+
+        ImageButton btnConfig = findViewById(R.id.btnConfig);
+        btnConfig.setOnClickListener(v -> {
+            startActivity(new Intent(this, PreferenciasActivity.class));
+        });
+
     }
 
     public void onImportarPlanilha(View v){ importarPlanilhaLauncher.launch("text/*"); }

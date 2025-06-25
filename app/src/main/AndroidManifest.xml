@@ -38,6 +38,6 @@
         <activity android:name=".SetorActivity"/>
         <activity android:name=".CadastroActivity" />
         <activity android:name=".GerenciarUsuariosActivity"/>
-
+        <activity android:name=".PreferenciasActivity"/>
     </application>
 </manifest>

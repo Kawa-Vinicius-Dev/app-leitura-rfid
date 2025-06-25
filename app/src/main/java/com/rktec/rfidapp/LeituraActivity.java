@@ -3,6 +3,8 @@ package com.rktec.rfidapp;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
@@ -14,9 +16,15 @@ import android.view.View;
 import android.widget.*;
 import android.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import com.pda.rfid.EPCModel;
 import com.pda.rfid.IAsynchronousMessage;
 import java.util.*;
+import android.graphics.Canvas;
+
 
 public class LeituraActivity extends AppCompatActivity implements IAsynchronousMessage {
 
@@ -34,6 +42,8 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
     private int potenciaAtual = 20;
     private Button btnFinalizar;
     private MediaPlayer mpSucesso;
+    private long ultimoVolumeDown = 0;
+    private static final long TEMPO_CONFIRMACAO = 2000; // 2 segundos
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +60,8 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
             finish();
             return;
         }
+
+        BancoHelper bancoHelper = new BancoHelper(this);
         listaPlanilha = DadosGlobais.getInstance().getListaPlanilha();
         listaSetores = DadosGlobais.getInstance().getListaSetores();
         lojaSelecionada = DadosGlobais.getInstance().getLojaSelecionada();
@@ -62,20 +74,68 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         ((TextView) findViewById(R.id.tvLojaSelecionada)).setText("Loja: " + lojaSelecionada);
         ((TextView) findViewById(R.id.tvSetorSelecionado)).setText("Setor: " + setorSelecionado.setor);
 
-        ListView listView = findViewById(R.id.listaItensLidos);
-        adapter = new ItemLeituraSessaoAdapter(this, itensSessao);
-        listView.setAdapter(adapter);
+        RecyclerView recyclerView = findViewById(R.id.listaItensLidos);
+        adapter = new ItemLeituraSessaoAdapter(itensSessao);
 
-        // Clicável: abre dialog de edição SEMPRE (encontrado ou não)
-        listView.setOnItemClickListener((parent, view, position, id) -> {
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(adapter);
+
+        // Clique abre dialog de edição
+        adapter.setOnItemClickListener(position -> {
             ItemLeituraSessao itemSessao = itensSessao.get(position);
             abrirDialogEdicao(itemSessao, position);
         });
 
+        // Swipe esquerda remove direto (sem editar/salvar)
+        ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+            @Override
+            public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
+                int pos = viewHolder.getAdapterPosition();
+                itensSessao.remove(pos);
+                adapter.notifyItemRemoved(pos);
+                atualizarContadorItens();
+                Toast.makeText(LeituraActivity.this, "Item removido!", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onChildDraw(Canvas c, RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder,
+                                    float dX, float dY, int actionState, boolean isCurrentlyActive) {
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+
+                // Se deslizando pra esquerda (dX < 0)
+                if (dX < 0) {
+                    View itemView = viewHolder.itemView;
+
+                    // Fundo vermelho proporcional ao swipe
+                    Paint p = new Paint();
+                    p.setColor(Color.parseColor("#D32F2F"));
+                    c.drawRect(
+                            itemView.getRight() + dX, itemView.getTop(),
+                            itemView.getRight(), itemView.getBottom(), p);
+
+                    // Ícone da lixeira centralizado
+                    Drawable icon = ContextCompat.getDrawable(itemView.getContext(), R.drawable.ic_delete);
+                    int iconMargin = (itemView.getHeight() - icon.getIntrinsicHeight()) / 2;
+                    int iconTop = itemView.getTop() + iconMargin;
+                    int iconBottom = iconTop + icon.getIntrinsicHeight();
+                    int iconLeft = itemView.getRight() - iconMargin - icon.getIntrinsicWidth();
+                    int iconRight = itemView.getRight() - iconMargin;
+                    icon.setBounds(iconLeft, iconTop, iconRight, iconBottom);
+                    icon.setAlpha((int) (255 * Math.min(1f, Math.abs(dX) / itemView.getWidth()))); // efeito fade se quiser
+
+                    icon.draw(c);
+                }
+            }
+        };
+        new ItemTouchHelper(simpleCallback).attachToRecyclerView(recyclerView);
         mpSucesso = MediaPlayer.create(this, R.raw.sucesso);
 
         btnFinalizar.setOnClickListener(v -> {
-            // Feedback visual imediato
             btnFinalizar.setText("Finalizando...");
             btnFinalizar.setEnabled(false);
             btnFinalizar.setTextColor(Color.WHITE);
@@ -99,12 +159,15 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                 tvPotencia.setText("Potência: " + potenciaAtual);
                 if (leitorRFID != null) leitorRFID.setPotencia(potenciaAtual);
             }
-
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) { }
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) { }
         });
+    }
+
+    private boolean getPreferencia(String chave, boolean padrao) {
+        return getSharedPreferences("prefs", MODE_PRIVATE).getBoolean(chave, padrao);
     }
 
     private void construirMapaPlaquetasGlobal(List<ItemPlanilha> lista) {
@@ -141,6 +204,24 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         }
         return super.onKeyUp(keyCode, event);
     }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getAction() == KeyEvent.ACTION_DOWN && event.getKeyCode() == KeyEvent.KEYCODE_VOLUME_UP) {
+            long agora = System.currentTimeMillis();
+            if (agora - ultimoVolumeDown < TEMPO_CONFIRMACAO) {
+                // Segunda vez: finaliza de verdade
+                btnFinalizar.performClick(); // Chama o mesmo fluxo do botão!
+                ultimoVolumeDown = 0; // Reseta para novas confirmações depois
+            } else {
+                Toast.makeText(this, "Aperte o volume - novamente para finalizar!", Toast.LENGTH_SHORT).show();
+                ultimoVolumeDown = agora;
+            }
+            return true; // Consome o evento (não baixa volume)
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
 
     public static String formatarEPC(String epc) {
         if (epc == null) return "";
@@ -400,6 +481,11 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                             sessao.item.loja = lojaAtual;
                             sessao.item.codlocalizacao = novoSetorCodigo;
                         }
+
+                        if (sessao.item != null && sessao.item.nroplaqueta != null) {
+                            BancoHelper bancoHelper = new BancoHelper(getApplicationContext());
+                            bancoHelper.atualizarDescricaoESetor(sessao.item.nroplaqueta, novaDesc, novoSetorCodigo);
+                        }
                         // Verifica alterações (só registra se editou algo)
                         StringBuilder alteracoes = new StringBuilder();
                         if (itemAntigo != null) {
@@ -433,9 +519,57 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
             mostrarDialogConfirmacao(
                     "Remover item",
                     Color.parseColor("#D32F2F"),
-                    "Tem certeza que deseja remover esse item da lista?\n\nEsta ação não pode ser desfeita.",
+                    "Tem certeza que deseja salvar as alterações e remover esse item da lista?\n\nEsta ação não pode ser desfeita.",
                     "Remover",
                     () -> {
+                        // --- SALVA ALTERAÇÕES ANTES DE REMOVER ---
+                        String novaDesc = edtDesc.getText().toString();
+                        String novoSetorNome = (String) spinnerSetor.getSelectedItem();
+                        String novoSetorCodigo = buscarCodigoSetorPorNome(novoSetorNome);
+
+                        // Salva dados antigos antes de alterar
+                        ItemPlanilha itemAntigo = null;
+                        if (sessao.item != null) {
+                            itemAntigo = new ItemPlanilha(
+                                    sessao.item.loja, sessao.item.sqbem, sessao.item.codgrupo, sessao.item.codlocalizacao, sessao.item.nrobem,
+                                    sessao.item.nroincorp, sessao.item.descresumida, sessao.item.descdetalhada, sessao.item.qtdbem,
+                                    sessao.item.nroplaqueta, sessao.item.nroseriebem, sessao.item.modelobem
+                            );
+                        }
+
+                        if (sessao.item != null) {
+                            sessao.item.descresumida = novaDesc;
+                            sessao.item.codlocalizacao = novoSetorCodigo;
+                            sessao.item.loja = lojaAtual; // só pra garantir
+
+                            // Atualiza no banco se for item real (se não for fake/temporário)
+                            if (sessao.item.nroplaqueta != null) {
+                                BancoHelper bancoHelper = new BancoHelper(getApplicationContext());
+                                bancoHelper.atualizarDescricaoESetor(sessao.item.nroplaqueta, novaDesc, novoSetorCodigo);
+                            }
+                        }
+
+                        // Log de edição (se mudou algo)
+                        StringBuilder alteracoes = new StringBuilder();
+                        if (itemAntigo != null) {
+                            if (!itemAntigo.descresumida.equals(novaDesc))
+                                alteracoes.append("Descrição: ").append(itemAntigo.descresumida).append(" -> ").append(novaDesc).append("; ");
+                            if (!itemAntigo.codlocalizacao.equals(novoSetorCodigo))
+                                alteracoes.append("Setor: ").append(itemAntigo.codlocalizacao).append(" -> ").append(novoSetorCodigo).append("; ");
+                        }
+                        if (alteracoes.length() > 0) {
+                            LogHelper.logEdicaoItem(
+                                    getApplicationContext(),
+                                    usuario,
+                                    lojaAtual,
+                                    novoSetorCodigo,
+                                    itemAntigo,
+                                    sessao.item,
+                                    alteracoes.toString()
+                            );
+                        }
+
+                        // --- AGORA REMOVE DA LISTA TEMPORÁRIA ---
                         itensSessao.remove(pos);
                         adapter.notifyDataSetChanged();
                         dialog.dismiss();
@@ -443,6 +577,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                     }
             );
         });
+
 
         btnCancelar.setOnClickListener(v -> dialog.dismiss());
 
