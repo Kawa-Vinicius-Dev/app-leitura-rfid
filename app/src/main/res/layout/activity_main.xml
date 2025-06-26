@@ -30,7 +30,7 @@
         android:layout_margin="8dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="Configurações"
-        android:src="@android:drawable/ic_menu_manage"
+        android:src="@drawable/ic_settings"
         tools:layout_editor_absoluteX="16dp"
         tools:layout_editor_absoluteY="36dp" />
 
