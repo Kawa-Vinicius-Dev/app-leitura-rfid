@@ -139,8 +139,14 @@ public class MainActivity extends AppCompatActivity {
         MaterialButton btnCancel  = dialogView.findViewById(R.id.btnCancel);
         MaterialButton btnConfirm = dialogView.findViewById(R.id.btnConfirm);
 
-        tvTitle.setText("Descartar planilha");
-        tvMsg.setText("Tem certeza que deseja descartar a planilha importada? Você precisará selecionar o arquivo novamente.");
+        boolean limparPlanilha = "planilha".equalsIgnoreCase(tipoArquivo);
+        String titulo = limparPlanilha ? "Descartar planilha" : "Descartar setores";
+        String mensagem = limparPlanilha
+                ? "Tem certeza que deseja descartar a planilha importada? Você precisará selecionar o arquivo novamente."
+                : "Tem certeza que deseja descartar o arquivo de setores? Você precisará selecionar o arquivo novamente.";
+
+        tvTitle.setText(titulo);
+        tvMsg.setText(mensagem);
 
         AlertDialog dialog = new AlertDialog.Builder(this, R.style.AppDialogTheme)
                 .setView(dialogView)
@@ -149,13 +155,19 @@ public class MainActivity extends AppCompatActivity {
 
         btnCancel.setOnClickListener(v -> dialog.dismiss());
         btnConfirm.setOnClickListener(v -> {
-            resetarEstadoBotaoPlanilha();
+            if (limparPlanilha) {
+                resetarEstadoBotaoPlanilha();
+            } else {
+                resetarEstadoBotaoSetor();
+                // (Opcional) Se quiser também "desmapear" nomes de setor já aplicados na listaPlanilha, faça aqui.
+                // Ex.: for (ItemPlanilha item : listaPlanilha) { item.setNomeSetor(null); }
+            }
             dialog.dismiss();
         });
 
         dialog.show();
-
     }
+
 
     private void resetarEstadoBotaoPlanilha() {
         listaPlanilha.clear();
