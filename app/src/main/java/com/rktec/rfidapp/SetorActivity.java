@@ -3,6 +3,7 @@ package com.rktec.rfidapp;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import androidx.appcompat.app.AppCompatActivity;
 import java.util.ArrayList;
@@ -14,6 +15,9 @@ public class SetorActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_setor);
+
+        ImageButton back = findViewById(R.id.btnBack);
+        back.setOnClickListener(v -> finish());
 
         List<SetorLocalizacao> setores = DadosGlobais.getInstance().getListaSetores();
         List<String> nomes = new ArrayList<>();

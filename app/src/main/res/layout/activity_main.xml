@@ -1,131 +1,140 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FAFAFA">
+    android:background="@color/background_light"
+    android:padding="24dp"
+    tools:context=".MainActivity">
 
-    <!-- Logo -->
     <ImageView
         android:id="@+id/imgLogo"
-        android:layout_width="188dp"
-        android:layout_height="151dp"
-        android:src="@drawable/logo_novo_atacarejo"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
         android:contentDescription="Logo Novo Atacarejo"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        android:src="@drawable/logo_novo_atacarejo"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="36dp"/>
-
-
-    <!-- Título -->
-
-    <ImageButton
-        android:id="@+id/btnConfig"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="end"
-        android:layout_margin="8dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Configurações"
-        android:src="@drawable/ic_settings"
-        tools:layout_editor_absoluteX="16dp"
-        tools:layout_editor_absoluteY="36dp" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/tvTitle"
+        style="@style/TituloTela"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Leitor RFID"
-        android:textAlignment="center"
-        android:textSize="22sp"
-        android:textColor="#1976D2"
-        android:textStyle="bold"
-        android:fontFamily="sans-serif-medium"
-        app:layout_constraintTop_toBottomOf="@id/imgLogo"
-        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="16dp"
+        android:text="Inventário RFID"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="24dp"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/imgLogo" />
 
-    <!-- LinearLayout dos botões -->
+
     <LinearLayout
-        android:id="@+id/linearLayout"
+        android:id="@+id/import_section"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:gravity="center"
-        android:padding="10dp"
+        android:layout_marginTop="24dp"
         app:layout_constraintTop_toBottomOf="@id/tvTitle"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent">
+        app:layout_constraintEnd_toEndOf="parent">
 
-        <Button
-            android:id="@+id/btnImportarPlanilha"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:onClick="onImportarPlanilha"
-            android:text="📤 Importar Planilha"
-            android:textSize="16sp"
-            android:fontFamily="sans-serif-medium"
-            android:backgroundTint="#1976D2"
-            android:textColor="#FFF"
-            android:elevation="4dp"
-            android:layout_marginTop="14dp"
-            android:layout_marginBottom="0dp" />
+            android:layout_height="wrap_content">
 
-        <Button
-            android:id="@+id/btnImportarSetor"
+            <Button
+                android:id="@+id/btnImportarPlanilha"
+                style="@style/BotaoPrimario"
+                android:onClick="onImportarPlanilha"
+                android:text="Importar Planilha"
+                app:icon="@drawable/ic_upload_file"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <ImageButton
+                android:id="@+id/btnLimparPlanilha"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_delete_sweep"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Limpar planilha importada"
+                android:visibility="gone"
+                tools:visibility="visible"
+                app:layout_constraintTop_toTopOf="@id/btnImportarPlanilha"
+                app:layout_constraintBottom_toBottomOf="@id/btnImportarPlanilha"
+                app:layout_constraintEnd_toEndOf="@id/btnImportarPlanilha"
+                android:layout_marginEnd="8dp"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:onClick="onImportarSetor"
-            android:text="🗂️ Importar Setores"
-            android:textSize="16sp"
-            android:fontFamily="sans-serif-medium"
-            android:backgroundTint="#1976D2"
-            android:textColor="#FFF"
-            android:elevation="4dp"
-            android:layout_marginTop="14dp" />
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp">
 
-        <Button
-            android:id="@+id/btnEscolherLoja"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:onClick="onEscolherLoja"
-            android:text="🏪 Escolher Loja"
-            android:textSize="16sp"
-            android:fontFamily="sans-serif-medium"
-            android:backgroundTint="#1976D2"
-            android:textColor="#FFF"
-            android:elevation="4dp"
-            android:layout_marginTop="14dp"/>
+            <Button
+                android:id="@+id/btnImportarSetor"
+                style="@style/BotaoPrimario"
+                android:onClick="onImportarSetor"
+                android:text="Importar Setores"
+                app:icon="@drawable/ic_upload_file"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
 
-        <Button
-            android:id="@+id/btnGerenciarUsuarios"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:text="👤 Gerenciar Usuários"
-            android:textSize="16sp"
-            android:fontFamily="sans-serif-medium"
-            android:backgroundTint="#FFA000"
-            android:textColor="#FFF"
-            android:elevation="4dp"
-            android:layout_marginTop="16dp"
-            android:visibility="gone" />
+            <ImageButton
+                android:id="@+id/btnLimparSetor"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_delete_sweep"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Limpar setores importados"
+                android:visibility="gone"
+                tools:visibility="visible"
+                app:layout_constraintTop_toTopOf="@id/btnImportarSetor"
+                app:layout_constraintBottom_toBottomOf="@id/btnImportarSetor"
+                app:layout_constraintEnd_toEndOf="@id/btnImportarSetor"
+                android:layout_marginEnd="8dp"/>
 
-        <Button
-            android:id="@+id/btnLogout"
-            android:layout_width="wrap_content"
-            android:layout_height="42dp"
-            android:text="🚪 Sair"
-            android:textSize="15sp"
-            android:fontFamily="sans-serif-medium"
-            android:background="@drawable/botao_rounded_red"
-            android:textColor="#FFF"
-            android:layout_marginTop="22dp"
-            android:elevation="3dp"/>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </LinearLayout>
+
+
+    <Button
+        android:id="@+id/btnEscolherLoja"
+        style="@style/BotaoPrimario"
+        android:onClick="onEscolherLoja"
+        android:layout_marginTop="12dp"
+        android:text="Escolher Loja"
+        app:icon="@drawable/ic_store"
+        app:layout_constraintTop_toBottomOf="@id/import_section"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <Button
+        android:id="@+id/btnGerenciarUsuarios"
+        style="@style/BotaoAviso"
+        android:layout_marginTop="12dp"
+        android:text="Gerenciar Usuários"
+        android:visibility="gone"
+        tools:visibility="visible"
+        app:icon="@drawable/ic_people"
+        app:layout_constraintTop_toBottomOf="@id/btnEscolherLoja"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <Button
+        android:id="@+id/btnLogout"
+        style="@style/BotaoPerigo"
+        android:layout_width="match_parent"
+        android:text="Sair"
+        app:icon="@drawable/ic_logout"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

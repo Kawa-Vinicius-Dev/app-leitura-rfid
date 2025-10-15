@@ -1,68 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="@drawable/bg_dialog_rounded"
+    android:orientation="vertical"
     android:padding="24dp">
 
     <TextView
-        android:id="@+id/tvLogoutTitle"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Sair do aplicativo"
-        android:textColor="#D32F2F"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:fontFamily="sans-serif-medium"
-        android:textAlignment="center"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        style="@style/TituloTela"
+        android:text="Confirmar Saída"
+        android:layout_gravity="center"
+        android:textColor="@color/error_red"/>
 
     <TextView
         android:id="@+id/tvLogoutMsg"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Tem certeza que deseja sair?\n\nATENÇÃO: se optar por sair, ao retornar para continuar o inventário, será necessário importar novamente a mesma planilha de trabalho padrão em uso (inventario_editado.csv)."
-        android:textColor="#212121"
-        android:textSize="15sp"
-        android:fontFamily="sans-serif"
-        android:textAlignment="center"
-        app:layout_constraintTop_toBottomOf="@id/tvLogoutTitle"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="12dp"
-        android:layout_marginBottom="28dp" /> <!-- Aumentei a marginBottom pra afastar dos botões -->
+        android:layout_marginTop="16dp"
+        android:gravity="center"
+        android:text="Ao sair, será necessário importar a planilha novamente na próxima sessão. Deseja continuar?"
+        android:textColor="@color/text_secondary"
+        android:textSize="16sp" />
 
     <LinearLayout
-        android:id="@+id/llButtons"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center"
-        app:layout_constraintTop_toBottomOf="@id/tvLogoutMsg"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="10dp"> <!-- MarginTop pra separar ainda mais se quiser -->
-
-        <Button
-            android:id="@+id/btnSair"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:text="Sair"
-            android:textColor="#FFF"
-            android:background="@drawable/botao_rounded_red"
-            android:fontFamily="sans-serif-medium"
-            android:layout_marginEnd="16dp"/>
+        android:layout_marginTop="24dp">
 
         <Button
             android:id="@+id/btnCancelar"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
+            style="@style/BotaoBase"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
             android:text="Cancelar"
-            android:textColor="#FFF"
-            android:background="@drawable/botao_rounded_red"
-            android:fontFamily="sans-serif-medium"/>
+            android:backgroundTint="@color/text_secondary"/>
+
+        <Button
+            android:id="@+id/btnSair"
+            style="@style/BotaoPerigo"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="Sair"/>
     </LinearLayout>
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

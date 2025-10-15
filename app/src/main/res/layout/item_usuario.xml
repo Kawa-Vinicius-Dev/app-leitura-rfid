@@ -1,54 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="60dp"
-    android:padding="8dp"
-    android:background="@drawable/bg_item_rounded">
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="2dp"
+    app:cardUseCompatPadding="true">
 
-    <TextView
-        android:id="@+id/tvNomeUsuario"
-        android:layout_width="0dp"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Nome do Usuário"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:textColor="#222"
-        android:fontFamily="sans-serif-medium"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/tvTipoUsuario"
-        android:layout_marginEnd="10dp"/>
+        android:padding="16dp">
 
-    <TextView
-        android:id="@+id/tvTipoUsuario"
-        android:layout_width="wrap_content"
-        android:layout_height="28dp"
-        android:text="ADM"
-        android:textStyle="bold"
-        android:textSize="13sp"
-        android:gravity="center"
-        android:background="@drawable/bg_tipo_usuario_membro"
-        android:textColor="#FFF"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:paddingTop="2dp"
-        android:paddingBottom="2dp"
-        app:layout_constraintEnd_toStartOf="@+id/btnRemover"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginEnd="10dp"/>
+        <ImageView
+            android:id="@+id/icon_user"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_people"
+            app:tint="@color/text_secondary"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
 
-    <ImageButton
-        android:id="@+id/btnRemover"
-        android:layout_width="38dp"
-        android:layout_height="38dp"
-        android:background="@drawable/btn_remover_bg"
-        android:src="@drawable/ic_delete"
-    android:contentDescription="Remover"
-    android:padding="7dp"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintBottom_toBottomOf="parent"/>
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <TextView
+            android:id="@+id/tvNomeUsuario"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Nome do Usuário"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:fontFamily="sans-serif-medium"
+            android:layout_marginStart="16dp"
+            app:layout_constraintStart_toEndOf="@id/icon_user"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/tvTipoUsuario"/>
+
+        <TextView
+            android:id="@+id/tvTipoUsuario"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ADM"
+            android:textStyle="bold"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:background="@drawable/bg_tipo_usuario_membro"
+            android:textColor="@color/white"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:layout_marginStart="16dp"
+            app:layout_constraintEnd_toStartOf="@+id/btnRemover"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <ImageButton
+            android:id="@+id/btnRemover"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_delete_sweep"
+            app:tint="@color/error_red"
+            android:contentDescription="Remover"
+            android:layout_marginStart="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.cardview.widget.CardView>

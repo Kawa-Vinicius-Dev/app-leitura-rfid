@@ -1,9 +1,15 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.RFIDApp" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+    <style name="Theme.RFIDApp" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/novo_atacarejo_blue</item>
+        <item name="colorPrimaryVariant">@color/novo_atacarejo_blue</item>
+        <item name="colorOnPrimary">@color/white</item>
+
+        <item name="android:windowBackground">@color/background_light</item>
+
+        <item name="android:statusBarColor">@color/novo_atacarejo_blue</item>
+        <item name="android:navigationBarColor">@color/background_light</item>
+
+        <item name="alertDialogTheme">@style/AppDialogTheme</item>
     </style>
 
-    <style name="Theme.RFIDApp" parent="Base.Theme.RFIDApp" />
 </resources>

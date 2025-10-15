@@ -3,6 +3,7 @@ package com.rktec.rfidapp;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import androidx.appcompat.app.AppCompatActivity;
 import java.util.*;
@@ -17,6 +18,9 @@ public class LojaActivity extends AppCompatActivity {
         List<ItemPlanilha> listaPlanilha = DadosGlobais.getInstance().getListaPlanilha();
         Set<String> lojasSet = new HashSet<>();
         for (ItemPlanilha it : listaPlanilha) lojasSet.add(it.loja);
+
+        ImageButton back = findViewById(R.id.btnBack);
+        back.setOnClickListener(v -> finish());
 
         List<String> lojas = new ArrayList<>(lojasSet);
         Collections.sort(lojas);

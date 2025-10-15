@@ -1,8 +1,0 @@
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@android:color/holo_red_light" android:state_pressed="true" />
-    <item>
-        <shape android:shape="oval">
-            <solid android:color="#FCE4EC"/>
-        </shape>
-    </item>
-</selector>

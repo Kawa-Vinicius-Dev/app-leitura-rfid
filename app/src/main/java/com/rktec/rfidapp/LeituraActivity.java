@@ -54,6 +54,9 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         tvMsgLeitura = findViewById(R.id.tvMsgLeitura);
         btnFinalizar = findViewById(R.id.btnFinalizar);
 
+        ImageButton back = findViewById(R.id.btnBack);
+        back.setOnClickListener(v -> finish());
+
         setorSelecionado = DadosGlobais.getInstance().getSetorSelecionado();
         if (setorSelecionado == null) {
             Toast.makeText(this, "Nenhum setor selecionado! Voltando...", Toast.LENGTH_LONG).show();

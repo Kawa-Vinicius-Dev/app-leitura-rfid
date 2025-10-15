@@ -4,34 +4,28 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="28dp"
-    android:gravity="center_horizontal"
-    android:background="@drawable/bg_dialog_rounded">
+    android:padding="24dp">
 
-    <ImageView
-        android:layout_width="54dp"
-        android:layout_height="54dp"
-        android:src="@drawable/ic_delete"
-        android:tint="#D32F2F"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="8dp"/>
+    <TextView
+        style="@style/TituloTela"
+        android:layout_gravity="center"
+        android:text="Remover Usuário" />
 
     <TextView
         android:id="@+id/tvMsgDialog"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_marginTop="8dp"
         android:text="Qual o motivo da remoção?"
-        android:textAlignment="center"
-        android:textColor="#222"
-        android:textSize="17sp"
-        android:fontFamily="sans-serif-medium"
-        android:layout_marginTop="6dp"
-        android:layout_marginBottom="10dp"/>
+        android:textColor="@color/text_secondary"
+        android:textSize="16sp" />
 
     <RadioGroup
         android:id="@+id/rgMotivo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
         android:orientation="vertical">
 
         <RadioButton
@@ -39,47 +33,37 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Desligamento de usuário"
-            android:textSize="16sp"
-            android:textColor="#222"
             android:checked="true"/>
 
         <RadioButton
             android:id="@+id/rbOutros"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Outros"
-            android:textSize="16sp"
-            android:textColor="#222"/>
+            android:text="Outros"/>
     </RadioGroup>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_marginTop="18dp">
+        android:layout_marginTop="24dp">
 
         <Button
             android:id="@+id/btnCancelarDialog"
+            style="@style/BotaoBase"
             android:layout_width="0dp"
-            android:layout_height="46dp"
             android:layout_weight="1"
+            android:layout_marginEnd="8dp"
             android:text="Cancelar"
-            android:backgroundTint="#AAAAAA"
-            android:textColor="#FFF"
-            android:textStyle="bold"
-            android:fontFamily="sans-serif-medium"
-            android:layout_marginEnd="8dp"/>
+            android:backgroundTint="@color/text_secondary"/>
 
         <Button
             android:id="@+id/btnRemoverDialog"
+            style="@style/BotaoPerigo"
             android:layout_width="0dp"
-            android:layout_height="46dp"
             android:layout_weight="1"
-            android:text="Remover"
-            android:backgroundTint="#D32F2F"
-            android:textColor="#FFF"
-            android:textStyle="bold"
-            android:fontFamily="sans-serif-medium"/>
+            android:layout_marginStart="8dp"
+            android:text="Remover"/>
     </LinearLayout>
+
 </LinearLayout>

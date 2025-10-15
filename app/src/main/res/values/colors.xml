@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#3F51B5</color>
-    <color name="colorPrimaryDark">#303F9F</color>
-    <color name="colorAccent">#FF4081</color>
+    <color name="novo_atacarejo_red">#E52421</color>
+    <color name="novo_atacarejo_blue">#0033A0</color>
+
+    <color name="background_light">#F7F8FC</color> <color name="text_primary">#212121</color> <color name="text_secondary">#757575</color> <color name="divider">#E0E0E0</color> <color name="success_green">#4CAF50</color>
+    <color name="warning_yellow">#FFC107</color>
+    <color name="error_red">#D32F2F</color>
+
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="ic_launcher_background">#FFFFFF</color>
 </resources>
