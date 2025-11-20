@@ -56,8 +56,8 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
 
         // ==== SIMULAÇÃO DE LEITURA - BOTÃO NA TELA ====
         // Botão que abre o diálogo para digitar um EPC ou gerar um EPC aleatório
-        Button btnSimularEpc = findViewById(R.id.btnSimularEpc);
-        btnSimularEpc.setOnClickListener(v -> abrirDialogSimularLeitura());
+        // Button btnSimularEpc = findViewById(R.id.btnSimularEpc);
+       // btnSimularEpc.setOnClickListener(v -> abrirDialogSimularLeitura());
 
         ImageButton back = findViewById(R.id.btnBack);
         back.setOnClickListener(v -> finish());
