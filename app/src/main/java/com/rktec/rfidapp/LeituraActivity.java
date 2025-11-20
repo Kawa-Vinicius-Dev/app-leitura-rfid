@@ -244,21 +244,97 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
     private void processarEPC(String epc) {
         String epcLimpo = formatarEPC(epc);
 
-        for (ItemLeituraSessao i : itensSessao)
+        // Evita processar o mesmo EPC mais de uma vez na sessão
+        for (ItemLeituraSessao i : itensSessao) {
             if (i.epc.equals(epcLimpo)) return;
+        }
 
+        // Procura o item na planilha base (por plaqueta)
         ItemPlanilha item = encontrarItemPorEPC(epc);
 
         ItemLeituraSessao novo = new ItemLeituraSessao(epcLimpo, item);
-        itensSessao.add(novo);
 
+        // Classificação do status da leitura:
+        //  - OK                  → item existe, loja e setor corretos
+        //  - SETOR_ERRADO        → item existe, loja correta, mas setor diferente
+        //  - LOJA_ERRADA         → item existe, mas em outra loja
+        //  - NAO_ENCONTRADO      → EPC não existe na base
+        if (item == null) {
+            novo.status = ItemLeituraSessao.STATUS_NAO_ENCONTRADO;
+        } else {
+            boolean mesmaLoja = (lojaSelecionada != null && lojaSelecionada.equals(item.loja));
+            boolean mesmoSetor = (setorSelecionado != null
+                    && item.codlocalizacao != null
+                    && item.codlocalizacao.equals(setorSelecionado.codlocalizacao));
+
+            if (mesmaLoja && mesmoSetor) {
+                novo.status = ItemLeituraSessao.STATUS_OK;
+            } else if (mesmaLoja) {
+                novo.status = ItemLeituraSessao.STATUS_SETOR_ERRADO;
+            } else {
+                novo.status = ItemLeituraSessao.STATUS_LOJA_ERRADA;
+            }
+        }
+
+        itensSessao.add(novo);
         adapter.notifyDataSetChanged();
         atualizarContadorItens();
+        atualizarFeedbackDaLeitura(novo);
+    }
 
-        if (item != null && item.loja.equals(lojaSelecionada)) {
-            tvMsgLeitura.setText("Encontrado: " + item.descresumida);
+    /**
+     * Atualiza a mensagem e a cor de fundo da área de feedback (tvMsgLeitura)
+     * de acordo com o status do último EPC lido.
+     */
+    private void atualizarFeedbackDaLeitura(ItemLeituraSessao sessao) {
+        if (sessao == null) return;
+
+        String msg;
+        int corFundo;
+
+        switch (sessao.status) {
+            case ItemLeituraSessao.STATUS_OK:
+                if (sessao.item != null && sessao.item.descresumida != null) {
+                    msg = "OK: " + sessao.item.descresumida + " está na loja e setor corretos.";
+                } else {
+                    msg = "OK: item na loja e setor corretos.";
+                }
+                corFundo = Color.parseColor("#E8F5E9"); // verde bem claro
+                break;
+
+            case ItemLeituraSessao.STATUS_SETOR_ERRADO:
+                String setorBase = (sessao.item != null && sessao.item.codlocalizacao != null)
+                        ? sessao.item.codlocalizacao
+                        : "-";
+                msg = "Atenção: item da loja correta, mas em outro setor (setor na base: " + setorBase + ").";
+                corFundo = Color.parseColor("#FFF8E1"); // amarelo claro
+                break;
+
+            case ItemLeituraSessao.STATUS_LOJA_ERRADA:
+                String lojaBase = (sessao.item != null && sessao.item.loja != null)
+                        ? sessao.item.loja
+                        : "-";
+                msg = "Alerta: item pertence à loja " + lojaBase + ", não à loja " + lojaSelecionada + ".";
+                corFundo = Color.parseColor("#FFF3E0"); // laranja claro
+                break;
+
+            case ItemLeituraSessao.STATUS_NAO_ENCONTRADO:
+            default:
+                msg = "Item não encontrado na base: EPC " + sessao.epc;
+                corFundo = Color.parseColor("#FFEBEE"); // vermelho bem claro
+                break;
+        }
+
+        tvMsgLeitura.setText(msg);
+
+        // Mantém o desenho arredondado do bg_msg_leitura, apenas trocando a cor
+        android.graphics.drawable.Drawable bg = tvMsgLeitura.getBackground();
+        if (bg instanceof android.graphics.drawable.GradientDrawable) {
+            android.graphics.drawable.GradientDrawable gd =
+                    (android.graphics.drawable.GradientDrawable) bg.mutate();
+            gd.setColor(corFundo);
         } else {
-            tvMsgLeitura.setText("Novo EPC: " + epcLimpo);
+            tvMsgLeitura.setBackgroundColor(corFundo);
         }
     }
 
