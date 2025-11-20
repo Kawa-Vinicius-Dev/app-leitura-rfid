@@ -4,17 +4,24 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    android:padding="20dp"
-    android:background="@color/background_light">
+    android:padding="32dp"
+    android:background="@color/background_app">
+
+    <ImageView
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:src="@drawable/ic_settings"
+        android:alpha="0.3"/>
 
     <TextView
-        style="@style/TituloTela"
-        android:text="Configurações"/>
+        style="@style/TituloFuturista"
+        android:text="Configurações"
+        android:layout_marginTop="24dp"/>
 
     <TextView
-        style="@style/SubtituloTela"
-        android:layout_marginTop="16dp"
+        style="@style/SubtituloFuturista"
+        android:layout_marginTop="8dp"
         android:gravity="center"
-        android:text="Esta tela está em desenvolvimento."/>
+        android:text="Esta funcionalidade estará disponível em breve."/>
 
 </LinearLayout>

@@ -9,6 +9,9 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.cardview.widget.CardView;
+import android.widget.ImageView;
+import androidx.cardview.widget.CardView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -29,8 +32,18 @@ public class MainActivity extends AppCompatActivity {
     private List<ItemPlanilha> listaPlanilha = new ArrayList<>();
     private List<SetorLocalizacao> listaSetores = new ArrayList<>();
 
-    private Button btnImportarPlanilha, btnImportarSetor, btnGerenciarUsuarios, btnLogout;
+    // ANTES
+// private Button btnImportarPlanilha, btnImportarSetor, btnGerenciarUsuarios, btnLogout;
+
+    // DEPOIS
+    private CardView btnImportarPlanilha, btnImportarSetor, btnGerenciarUsuarios;
+    private Button btnLogout;
     private ImageButton btnLimparPlanilha, btnLimparSetor;
+
+    // NOVOS TextViews para mudar o texto dos cards
+    private TextView tvStatusPlanilha, tvStatusSetor;
+
+    private ImageView imgIconPlanilha, imgIconSetor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +66,14 @@ public class MainActivity extends AppCompatActivity {
         btnGerenciarUsuarios  = findViewById(R.id.btnGerenciarUsuarios);
         btnLimparPlanilha     = findViewById(R.id.btnLimparPlanilha);
         btnLimparSetor        = findViewById(R.id.btnLimparSetor);
+
+// novos:
+        tvStatusPlanilha = findViewById(R.id.tvStatusPlanilha);
+        tvStatusSetor    = findViewById(R.id.tvStatusSetor);
+
+        imgIconPlanilha       = findViewById(R.id.imgIconPlanilha);
+        imgIconSetor          = findViewById(R.id.imgIconSetor);
+
 
         btnLogout.setOnClickListener(this::onLogout);
 
@@ -89,10 +110,10 @@ public class MainActivity extends AppCompatActivity {
                             MapeadorSetor.aplicar(listaPlanilha, mapa);
                         }
 
-                        btnImportarPlanilha.setText("Planilha OK (" + listaPlanilha.size() + " itens)");
+                        tvStatusPlanilha.setText("Planilha OK (" + listaPlanilha.size() + " itens)");
                         btnImportarPlanilha.setEnabled(false);
                         btnImportarPlanilha.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.success_green)));
-                        btnImportarPlanilha.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_check, 0, 0, 0);
+                        imgIconPlanilha.setImageResource(R.drawable.ic_check);
 
                         btnLimparPlanilha.setVisibility(View.VISIBLE);
                         Toast.makeText(this, "Importados " + listaPlanilha.size() + " itens!", Toast.LENGTH_SHORT).show();
@@ -120,10 +141,10 @@ public class MainActivity extends AppCompatActivity {
                             // (Opcional) atualize algo visual se quiser mostrar que os nomes foram aplicados
                         }
 
-                        btnImportarSetor.setText("Setores OK (" + listaSetores.size() + ")");
+                        tvStatusSetor.setText("Setores OK (" + listaSetores.size() + ")");
                         btnImportarSetor.setEnabled(false);
                         btnImportarSetor.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.success_green)));
-                        btnImportarSetor.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_check, 0, 0, 0);
+                        imgIconSetor.setImageResource(R.drawable.ic_check);
 
                         btnLimparSetor.setVisibility(View.VISIBLE);
                         Toast.makeText(this, "Importados " + listaSetores.size() + " setores!", Toast.LENGTH_SHORT).show();
@@ -172,10 +193,10 @@ public class MainActivity extends AppCompatActivity {
     private void resetarEstadoBotaoPlanilha() {
         listaPlanilha.clear();
         DadosGlobais.getInstance().setListaPlanilha(null);
-        btnImportarPlanilha.setText("Importar Planilha");
+        tvStatusPlanilha.setText("Importar Dados");
         btnImportarPlanilha.setEnabled(true);
         btnImportarPlanilha.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.novo_atacarejo_blue)));
-        btnImportarPlanilha.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_upload_file, 0, 0, 0);
+        imgIconPlanilha.setImageResource(R.drawable.ic_upload_file);
         btnLimparPlanilha.setVisibility(View.GONE);
         Toast.makeText(this, "Planilha descartada.", Toast.LENGTH_SHORT).show();
     }
@@ -183,10 +204,10 @@ public class MainActivity extends AppCompatActivity {
     private void resetarEstadoBotaoSetor() {
         listaSetores.clear();
         DadosGlobais.getInstance().setListaSetores(null);
-        btnImportarSetor.setText("Importar Setores");
+        tvStatusSetor.setText("Importar Setores");
         btnImportarSetor.setEnabled(true);
         btnImportarSetor.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.novo_atacarejo_blue)));
-        btnImportarSetor.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_upload_file, 0, 0, 0);
+        imgIconSetor.setImageResource(R.drawable.ic_upload_file);
         btnLimparSetor.setVisibility(View.GONE);
         Toast.makeText(this, "Setores descartados.", Toast.LENGTH_SHORT).show();
     }

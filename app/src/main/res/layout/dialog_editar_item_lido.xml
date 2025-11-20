@@ -4,62 +4,72 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:padding="24dp"
+    android:background="@drawable/bg_dialog_rounded">
 
     <TextView
-        style="@style/TituloTela"
+        style="@style/TituloFuturista"
         android:layout_width="match_parent"
-        android:text="Editar Item" />
+        android:text="Editar Detalhes"
+        android:gravity="center"/>
 
     <TextView
         android:id="@+id/tvPlaquetaDialog"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:gravity="center"
-        android:text="Plaqueta: 000000"
+        android:text="EPC: 0000..."
+        android:fontFamily="monospace"
         android:textColor="@color/text_secondary"
-        android:textSize="16sp" />
+        android:textSize="12sp"
+        android:background="@drawable/bg_input_futurista"
+        android:backgroundTint="#F5F5F5"
+        android:padding="8dp"
+        android:layout_marginBottom="16dp"/>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Descrição Resumida"
+        android:text="Descrição"
+        android:textSize="14sp"
         android:textColor="@color/text_primary"
-        android:textSize="14sp"/>
+        android:textStyle="bold"
+        android:layout_marginBottom="4dp"/>
 
     <EditText
         android:id="@+id/edtDescResumidaDialog"
+        style="@style/EditTextFuturista"
         android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:background="@drawable/bg_item_rounded"
-        android:hint="Descrição do item"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"/>
-
-    <TextView
-        android:id="@+id/tvLojaDialog"
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Loja: Nome da Loja"
-        android:textColor="@color/text_primary"
-        android:textSize="14sp"/>
+        android:hint="Nome do item..."
+        android:minHeight="48dp"/>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Setor de Localização"
+        android:text="Setor"
+        android:textSize="14sp"
         android:textColor="@color/text_primary"
-        android:textSize="14sp"/>
+        android:textStyle="bold"
+        android:layout_marginBottom="4dp"/>
 
     <Spinner
         android:id="@+id/spinnerSetorDialog"
         android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:background="@drawable/bg_item_rounded"/>
+        android:layout_height="50dp"
+        android:background="@drawable/bg_input_futurista"/>
+
+    <TextView
+        android:id="@+id/tvLojaDialog"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Loja: -"
+        android:gravity="end"
+        android:textSize="12sp"
+        android:textColor="@color/text_hint"
+        android:layout_marginTop="4dp"/>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -69,26 +79,29 @@
 
         <Button
             android:id="@+id/btnCancelarDialog"
-            style="@style/BotaoBase"
+            style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="0dp"
+            android:layout_height="52dp"
             android:layout_weight="1"
-            android:layout_marginEnd="8dp"
-            android:text="Cancelar"
-            android:backgroundTint="@color/text_secondary"/>
+            android:text="Voltar"
+            android:textColor="@color/text_secondary"/>
 
         <Button
             android:id="@+id/btnSalvarDialog"
-            style="@style/BotaoPrimario"
+            style="@style/BotaoFuturista"
             android:layout_width="0dp"
+            android:layout_height="52dp"
             android:layout_weight="1"
-            android:layout_marginStart="8dp"
-            android:text="Salvar"/>
+            android:text="Salvar"
+            android:layout_marginStart="8dp"/>
     </LinearLayout>
 
     <Button
         android:id="@+id/btnRemoverDialog"
-        style="@style/BotaoPerigo"
+        style="@style/BotaoPerigoFuturista"
         android:layout_width="match_parent"
+        android:layout_height="40dp"
         android:layout_marginTop="12dp"
-        android:text="Salvar e Remover da Lista"/>
+        android:text="Excluir Item"
+        android:textSize="12sp"/>
 </LinearLayout>

@@ -4,142 +4,179 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background_light"
-    tools:context=".LeituraActivity">
+    android:background="@color/background_app">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/header"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/novo_atacarejo_blue"
-        android:orientation="vertical"
-        android:padding="12dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:elevation="4dp">
+        android:background="@drawable/bg_card_gradient"
+        android:padding="16dp"
+        android:paddingBottom="32dp"
+        app:layout_constraintTop_toTopOf="parent">
 
         <ImageButton
             android:id="@+id/btnBack"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:layout_gravity="start"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:padding="8dp"
-            android:src="@drawable/ic_arrow_back" />
+            android:background="@drawable/bg_input_futurista"
+            android:backgroundTint="#20FFFFFF"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="@color/white"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
 
         <TextView
-            style="@style/TituloTela"
-            android:layout_width="match_parent"
-            android:text="Leitura RFID"
+            android:id="@+id/pageTitle"
+            style="@style/TituloFuturista"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Lendo Etiquetas"
             android:textColor="@color/white"
-            android:textSize="22sp" />
+            app:layout_constraintStart_toEndOf="@id/btnBack"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="@id/btnBack"/>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center">
+            android:gravity="center"
+            android:layout_marginTop="12dp"
+            app:layout_constraintTop_toBottomOf="@id/pageTitle">
 
             <TextView
                 android:id="@+id/tvLojaSelecionada"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/white"
-                android:textSize="14sp"
-                android:layout_marginEnd="16dp"
-                tools:text="Loja: 01 - Matriz" />
+                android:text="Loja 01"
+                android:textColor="#E0E0E0"
+                android:textStyle="bold"
+                android:layout_marginEnd="16dp"/>
+
+            <View android:layout_width="1dp" android:layout_height="12dp" android:background="#80FFFFFF"/>
 
             <TextView
                 android:id="@+id/tvSetorSelecionado"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/white"
-                android:textSize="14sp"
-                tools:text="Setor: 101 - Eletrônicos" />
+                android:text="Setor 100"
+                android:textColor="#E0E0E0"
+                android:layout_marginStart="16dp"/>
         </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/status_panel"
-        android:layout_width="0dp"
+    <androidx.cardview.widget.CardView
+        android:id="@+id/status_card"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="12dp"
+        android:layout_margin="16dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="6dp"
         app:layout_constraintTop_toBottomOf="@id/header"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toTopOf="@id/header"
+        android:layout_marginTop="100dp">
 
-        <TextView
-            android:id="@+id/tvContadorItens"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-medium"
-            android:gravity="center"
-            android:textColor="@color/novo_atacarejo_blue"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            tools:text="Itens Lidos: 15 / 42" />
+            android:orientation="vertical"
+            android:padding="16dp">
 
-        <TextView
-            android:id="@+id/tvMsgLeitura"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_msg_leitura"
-            android:gravity="center"
-            android:padding="10dp"
-            android:text="Aperte o gatilho para iniciar a leitura"
-            android:textColor="@color/text_secondary"
-            android:textSize="15sp" />
-    </LinearLayout>
+            <TextView
+                android:id="@+id/tvContadorItens"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="15"
+                android:textSize="36sp"
+                android:textStyle="bold"
+                android:textColor="@color/novo_atacarejo_blue"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="ITENS LIDOS"
+                android:textSize="12sp"
+                android:letterSpacing="0.1"
+                android:textColor="@color/text_secondary"/>
+
+            <TextView
+                android:id="@+id/tvMsgLeitura"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_input_futurista"
+                android:backgroundTint="#FFF3E0"
+                android:gravity="center"
+                android:padding="8dp"
+                android:text="Aperte o gatilho..."
+                android:textColor="#EF6C00"
+                android:textStyle="bold"/>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/listaItensLidos"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:padding="8dp"
         android:clipToPadding="false"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        app:layout_constraintTop_toBottomOf="@id/status_panel"
+        app:layout_constraintTop_toBottomOf="@id/status_card"
         app:layout_constraintBottom_toTopOf="@id/controls_panel"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
     <LinearLayout
         android:id="@+id/controls_panel"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp"
-        android:background="@color/white"
-        android:elevation="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        android:background="@drawable/bg_dialog_rounded"
+        android:elevation="16dp"
+        android:padding="20dp"
+        app:layout_constraintBottom_toBottomOf="parent">
 
-        <TextView
-            android:id="@+id/tvPotencia"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Potência: 20"
-            android:textColor="@color/text_secondary"
-            android:textSize="14sp"
-            android:layout_gravity="center_horizontal"/>
-
-        <SeekBar
-            android:id="@+id/sbPotencia"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:max="33"
-            android:progress="20" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            <TextView
+                android:text="Potência"
+                android:textStyle="bold"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+            <SeekBar
+                android:id="@+id/sbPotencia"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:progressTint="@color/novo_atacarejo_blue"
+                android:thumbTint="@color/novo_atacarejo_blue"/>
+            <TextView
+                android:id="@+id/tvPotencia"
+                android:text="30"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
 
         <Button
             android:id="@+id/btnFinalizar"
-            style="@style/BotaoPrimario"
-            android:layout_marginTop="12dp"
+            style="@style/BotaoFuturista"
+            android:layout_marginTop="16dp"
             android:text="Finalizar e Exportar" />
+
+        <Button
+            android:id="@+id/btnSimularEpc"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Simular Leitura"
+            android:textColor="@color/text_secondary"/>
 
     </LinearLayout>
 

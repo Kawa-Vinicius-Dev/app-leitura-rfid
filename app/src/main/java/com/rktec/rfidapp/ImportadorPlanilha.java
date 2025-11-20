@@ -15,6 +15,27 @@ public class ImportadorPlanilha {
 
     private static final String TAG = "ImportadorPlanilha";
 
+    /**
+     * Cabeçalho esperado (na ordem que você mandou):
+     *
+     * EMPRESA;NOTA_FISCAL;SERIE;FORNECEDOR;DTA_EMISSAO;DTA_AQUISICAO;DTA_INCORP;
+     * TIPO_MOVIMENTO;CONTA;DESCRICAO_CONTA;SEQBEM;NROBEM;LOCALIZACAO;NROPLAQUETA;
+     * SEQPRODUTO;DESCRICAO;DESC_BEM;MODELO;SERIE;QTDE;NROITEM;CUSTO_AQUISICAO;
+     * CUSTO_CORRIGIDO;PERCCONTAB;DPR_ACUMULADA;VLR_CONTAB_LIQ
+     *
+     * Mapeamento para ItemPlanilha:
+     *  - loja          ← EMPRESA        (normaliza zeros à esquerda)
+     *  - codgrupo      ← CONTA
+     *  - sqbem         ← SEQBEM
+     *  - nrobem        ← NROBEM
+     *  - codlocalizacao← LOCALIZACAO    (setor)
+     *  - nroplaqueta   ← NROPLAQUETA    (normaliza zeros à esquerda)
+     *  - descresumida  ← DESCRICAO
+     *  - descdetalhada ← DESC_BEM
+     *  - modelobem     ← MODELO
+     *  - nroseriebem   ← SERIE
+     *  - qtdbem        ← QTDE
+     */
     public static List<ItemPlanilha> importar(Context context, Uri fileUri) {
         List<ItemPlanilha> lista = new ArrayList<>();
         if (context == null || fileUri == null) return lista;
@@ -33,32 +54,32 @@ public class ImportadorPlanilha {
             char sep = detectSeparator(header);
             List<String> headerCols = splitCsv(header, sep);
 
-            int idxLoja         = indexOfIgnoreCase(headerCols, "LOJA");
-            int idxSeqBem       = indexOfIgnoreCase(headerCols, "SEQBEM");
-            int idxCodGrupo     = indexOfIgnoreCase(headerCols, "CODGRUPO");
-            int idxCodLocal     = indexOfIgnoreCase(headerCols, "CODLOCALIZACAO");
-            int idxNroBem       = indexOfIgnoreCase(headerCols, "NROBEM");
-            int idxNroIncorp    = indexOfIgnoreCase(headerCols, "NROINCORP");
-            int idxDescRes      = indexOfIgnoreCase(headerCols, "DESCRESUMIDA");
-            int idxDescDet      = indexOfIgnoreCase(headerCols, "DESCDETALHADA");
-            int idxQtdBem       = indexOfIgnoreCase(headerCols, "QTDBEM");
-            int idxNroPlaqueta  = indexOfIgnoreCase(headerCols, "NROPLAQUETA");
-            int idxNroSerie     = indexOfIgnoreCase(headerCols, "NROSERIEBEM");
-            int idxModelo       = indexOfIgnoreCase(headerCols, "MODELOBEM");
+            // --- Índices baseados no cabeçalho REAL da planilha ---
+            int idxEmpresa     = indexOfIgnoreCase(headerCols, "EMPRESA");
+            int idxConta       = indexOfIgnoreCase(headerCols, "CONTA");
+            int idxSeqBem      = indexOfIgnoreCase(headerCols, "SEQBEM");
+            int idxNroBem      = indexOfIgnoreCase(headerCols, "NROBEM");
+            int idxLocalizacao = indexOfIgnoreCase(headerCols, "LOCALIZACAO");
+            int idxNroPlaqueta = indexOfIgnoreCase(headerCols, "NROPLAQUETA");
+            int idxDescricao   = indexOfIgnoreCase(headerCols, "DESCRICAO");
+            int idxDescBem     = indexOfIgnoreCase(headerCols, "DESC_BEM");
+            int idxModelo      = indexOfIgnoreCase(headerCols, "MODELO");
+            int idxSerieBem    = indexOfIgnoreCase(headerCols, "SERIE");
+            int idxQtde        = indexOfIgnoreCase(headerCols, "QTDE");
 
-            // Fallback simples caso o header venha estranho
-            if (idxLoja        < 0) idxLoja        = 0;
-            if (idxSeqBem      < 0) idxSeqBem      = 1;
-            if (idxCodGrupo    < 0) idxCodGrupo    = 2;
-            if (idxCodLocal    < 0) idxCodLocal    = 3;
-            if (idxNroBem      < 0) idxNroBem      = 4;
-            if (idxNroIncorp   < 0) idxNroIncorp   = 5;
-            if (idxDescRes     < 0) idxDescRes     = 6;
-            if (idxDescDet     < 0) idxDescDet     = 7;
-            if (idxQtdBem      < 0) idxQtdBem      = 8;
-            if (idxNroPlaqueta < 0) idxNroPlaqueta = 9;
-            if (idxNroSerie    < 0) idxNroSerie    = 10;
-            if (idxModelo      < 0) idxModelo      = 11;
+            // Fallback para posição fixa se algum não for encontrado
+            // (com base na ordem que você mandou)
+            if (idxEmpresa     < 0) idxEmpresa     = 0;
+            if (idxConta       < 0) idxConta       = 8;
+            if (idxSeqBem      < 0) idxSeqBem      = 10;
+            if (idxNroBem      < 0) idxNroBem      = 11;
+            if (idxLocalizacao < 0) idxLocalizacao = 12;
+            if (idxNroPlaqueta < 0) idxNroPlaqueta = 13;
+            if (idxDescricao   < 0) idxDescricao   = 15;
+            if (idxDescBem     < 0) idxDescBem     = 16;
+            if (idxModelo      < 0) idxModelo      = 17;
+            if (idxSerieBem    < 0) idxSerieBem    = 18;
+            if (idxQtde        < 0) idxQtde        = 19;
 
             // Aqui vem a mágica: juntar linhas quebradas
             String current = null;
@@ -81,10 +102,23 @@ public class ImportadorPlanilha {
                 if (isInicioDeRegistro(trimmed)) {
                     // A linha atual parece o início de uma nova loja (ex.: "001 CARPINA", "500-MATRIZ")
                     // então fechamos o registro anterior e começamos um novo
-                    adicionarItem(lista, current, sep,
-                            idxLoja, idxSeqBem, idxCodGrupo, idxCodLocal,
-                            idxNroBem, idxNroIncorp, idxDescRes, idxDescDet,
-                            idxQtdBem, idxNroPlaqueta, idxNroSerie, idxModelo);
+                    adicionarItem(
+                            lista,
+                            current,
+                            sep,
+                            idxEmpresa,
+                            idxSeqBem,
+                            idxConta,
+                            idxLocalizacao,
+                            idxNroBem,
+                            /* idxNroIncorp (não temos coluna específica, deixa -1 no uso) */ -1,
+                            idxDescricao,
+                            idxDescBem,
+                            idxQtde,
+                            idxNroPlaqueta,
+                            idxSerieBem,
+                            idxModelo
+                    );
 
                     current = trimmed;
                 } else {
@@ -96,10 +130,23 @@ public class ImportadorPlanilha {
 
             // Flush do último registro
             if (current != null) {
-                adicionarItem(lista, current, sep,
-                        idxLoja, idxSeqBem, idxCodGrupo, idxCodLocal,
-                        idxNroBem, idxNroIncorp, idxDescRes, idxDescDet,
-                        idxQtdBem, idxNroPlaqueta, idxNroSerie, idxModelo);
+                adicionarItem(
+                        lista,
+                        current,
+                        sep,
+                        idxEmpresa,
+                        idxSeqBem,
+                        idxConta,
+                        idxLocalizacao,
+                        idxNroBem,
+                        -1,
+                        idxDescricao,
+                        idxDescBem,
+                        idxQtde,
+                        idxNroPlaqueta,
+                        idxSerieBem,
+                        idxModelo
+                );
             }
 
             Log.d(TAG, "Itens importados: " + lista.size());
@@ -145,18 +192,18 @@ public class ImportadorPlanilha {
             List<ItemPlanilha> lista,
             String rawLine,
             char sep,
-            int idxLoja,
-            int idxSeqBem,
-            int idxCodGrupo,
-            int idxCodLocal,
-            int idxNroBem,
-            int idxNroIncorp,
-            int idxDescRes,
-            int idxDescDet,
-            int idxQtdBem,
-            int idxNroPlaqueta,
-            int idxNroSerie,
-            int idxModelo
+            int idxEmpresa,      // EMPRESA -> loja
+            int idxSeqBem,       // SEQBEM
+            int idxConta,        // CONTA -> codgrupo
+            int idxLocalizacao,  // LOCALIZACAO -> codlocalizacao (setor)
+            int idxNroBem,       // NROBEM
+            int idxNroIncorp,    // (não temos, normalmente -1)
+            int idxDescricao,    // DESCRICAO -> descresumida
+            int idxDescBem,      // DESC_BEM -> descdetalhada
+            int idxQtde,         // QTDE -> qtdbem
+            int idxNroPlaqueta,  // NROPLAQUETA -> nroplaqueta
+            int idxSerieBem,     // SERIE -> nroseriebem
+            int idxModelo        // MODELO -> modelobem
     ) {
         if (rawLine == null) return;
         String line = rawLine.trim();
@@ -166,9 +213,9 @@ public class ImportadorPlanilha {
 
         // Garante que temos pelo menos colunas suficientes
         int minIndex = max(
-                idxLoja, idxSeqBem, idxCodGrupo, idxCodLocal,
-                idxNroBem, idxNroIncorp, idxDescRes, idxDescDet,
-                idxQtdBem, idxNroPlaqueta, idxNroSerie, idxModelo
+                idxEmpresa, idxSeqBem, idxConta, idxLocalizacao,
+                idxNroBem, idxNroIncorp, idxDescricao, idxDescBem,
+                idxQtde, idxNroPlaqueta, idxSerieBem, idxModelo
         );
 
         if (cols.size() <= minIndex) {
@@ -176,17 +223,17 @@ public class ImportadorPlanilha {
             return;
         }
 
-        String loja        = safe(get(cols, idxLoja));
+        String loja        = normalizeLoja(safe(get(cols, idxEmpresa)));
         String seqBem      = safe(get(cols, idxSeqBem));
-        String codGrupo    = safe(get(cols, idxCodGrupo));
-        String codLocal    = safe(get(cols, idxCodLocal));
+        String codGrupo    = safe(get(cols, idxConta));
+        String codLocal    = safe(get(cols, idxLocalizacao));
         String nroBem      = safe(get(cols, idxNroBem));
-        String nroIncorp   = safe(get(cols, idxNroIncorp));
-        String descRes     = safe(get(cols, idxDescRes));
-        String descDet     = safe(get(cols, idxDescDet));
-        String qtdBem      = safe(get(cols, idxQtdBem));
-        String nroPlaqueta = safe(get(cols, idxNroPlaqueta));
-        String nroSerie    = safe(get(cols, idxNroSerie));
+        String nroIncorp   = (idxNroIncorp >= 0 ? safe(get(cols, idxNroIncorp)) : "");
+        String descRes     = safe(get(cols, idxDescricao));
+        String descDet     = safe(get(cols, idxDescBem));
+        String qtdBem      = safe(get(cols, idxQtde));
+        String nroPlaqueta = normalizePlaqueta(safe(get(cols, idxNroPlaqueta)));
+        String nroSerie    = safe(get(cols, idxSerieBem));
         String modelo      = safe(get(cols, idxModelo));
 
         ItemPlanilha item = new ItemPlanilha(
@@ -237,6 +284,24 @@ public class ImportadorPlanilha {
         if (v == null) return "";
         // troca NBSP por espaço normal e trim
         return v.replace('\u00A0', ' ').trim();
+    }
+
+    /** Normaliza número da loja removendo zeros à esquerda ("001" -> "1"). */
+    private static String normalizeLoja(String raw) {
+        String s = safe(raw);
+        if (s.matches("^\\d+$")) {
+            s = s.replaceFirst("^0+(?!$)", "");
+        }
+        return s;
+    }
+
+    /** Normaliza plaqueta, removendo zeros à esquerda. */
+    private static String normalizePlaqueta(String raw) {
+        String s = safe(raw);
+        if (s.matches("^\\d+$")) {
+            s = s.replaceFirst("^0+(?!$)", "");
+        }
+        return s;
     }
 
     /** Detecta o separador mais provável na linha de cabeçalho. */

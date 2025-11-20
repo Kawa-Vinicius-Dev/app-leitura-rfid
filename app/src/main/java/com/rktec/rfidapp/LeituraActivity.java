@@ -54,6 +54,11 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         tvMsgLeitura = findViewById(R.id.tvMsgLeitura);
         btnFinalizar = findViewById(R.id.btnFinalizar);
 
+        // ==== SIMULAÇÃO DE LEITURA - BOTÃO NA TELA ====
+        // Botão que abre o diálogo para digitar um EPC ou gerar um EPC aleatório
+        Button btnSimularEpc = findViewById(R.id.btnSimularEpc);
+        btnSimularEpc.setOnClickListener(v -> abrirDialogSimularLeitura());
+
         ImageButton back = findViewById(R.id.btnBack);
         back.setOnClickListener(v -> finish());
 
@@ -282,6 +287,53 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         atualizarFeedbackDaLeitura(novo);
     }
 
+    // ==== SIMULAÇÃO DE LEITURA - GERA EPC ALEATÓRIO ====
+    // Usado pela simulação para criar um EPC válido e testar todo o fluxo sem o coletor físico
+    private String gerarEpcAleatorio() {
+        String chars = "0123456789ABCDEF";
+        StringBuilder sb = new StringBuilder();
+        // tamanho típico de EPC (ajusta se quiser)
+        java.util.Random random = new java.util.Random();
+        for (int i = 0; i < 24; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
+    }
+
+    // ==== SIMULAÇÃO DE LEITURA - DIALOG PARA DIGITAR/GERAR EPC ====
+    // Abre um diálogo onde o usuário pode:
+    //  - digitar um EPC manualmente, ou
+    //  - deixar em branco / clicar em "Aleatório" para gerar um EPC aleatório
+    // Em ambos os casos, chama processarEPC(epc), reutilizando a mesma lógica da leitura real.
+    private void abrirDialogSimularLeitura() {
+        final EditText input = new EditText(this);
+        input.setHint("Digite o EPC ou deixe em branco para aleatório");
+        input.setSingleLine(true);
+
+        int padding = (int) (16 * getResources().getDisplayMetrics().density);
+        input.setPadding(padding, padding, padding, padding);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Simular leitura de EPC")
+                .setView(input)
+                .setPositiveButton("Simular", (dialog, which) -> {
+                    String epc = input.getText().toString().trim();
+                    if (epc.isEmpty()) {
+                        epc = gerarEpcAleatorio();
+                        Toast.makeText(this, "EPC aleatório: " + epc, Toast.LENGTH_SHORT).show();
+                    }
+                    processarEPC(epc);
+                })
+                .setNeutralButton("Aleatório", (dialog, which) -> {
+                    String epcAleatorio = gerarEpcAleatorio();
+                    Toast.makeText(this, "EPC aleatório: " + epcAleatorio, Toast.LENGTH_SHORT).show();
+                    processarEPC(epcAleatorio);
+                })
+                .setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss())
+                .show();
+    }
+
+
     /**
      * Atualiza a mensagem e a cor de fundo da área de feedback (tvMsgLeitura)
      * de acordo com o status do último EPC lido.
@@ -491,8 +543,22 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         Button btnSalvar = view.findViewById(R.id.btnSalvarDialog);
         Button btnCancelar = view.findViewById(R.id.btnCancelarDialog);
 
-        // Preenche campos
-        edtDesc.setText(sessao.item != null ? sessao.item.descresumida : "");
+        // Preenche campos usando a DESCRIÇÃO DETALHADA (fallback para a resumida)
+        if (sessao.item != null) {
+            String textoDesc;
+
+            if (sessao.item.descdetalhada != null && !sessao.item.descdetalhada.trim().isEmpty()) {
+                textoDesc = sessao.item.descdetalhada;
+            } else if (sessao.item.descresumida != null) {
+                textoDesc = sessao.item.descresumida;
+            } else {
+                textoDesc = "";
+            }
+
+            edtDesc.setText(textoDesc);
+        } else {
+            edtDesc.setText("");
+        }
         tvPlaqueta.setText("Plaqueta: " + sessao.epc);
 
         // Nome da loja (apenas visual, não editável)
@@ -529,11 +595,11 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                     "Tem certeza que deseja salvar as alterações deste item?",
                     "Salvar",
                     () -> {
-                        String novaDesc = edtDesc.getText().toString();
+                        String novaDescDet = edtDesc.getText().toString();
                         String novoSetorNome = (String) spinnerSetor.getSelectedItem();
                         String novoSetorCodigo = buscarCodigoSetorPorNome(novoSetorNome);
 
-                        // Salva dados antigos antes de alterar
+// Salva dados antigos antes de alterar (inclusive descdetalhada)
                         ItemPlanilha itemAntigo = null;
                         if (sessao.item != null) {
                             itemAntigo = new ItemPlanilha(
@@ -544,10 +610,13 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                         }
 
                         if (sessao.item == null) {
-                            // Só atualiza o objeto visual na lista, não salva na planilha real, nem loga agora!
+                            // Item "fake" criado na sessão: usa a mesma string na resumida e detalhada
                             ItemPlanilha itemNovoFake = new ItemPlanilha(
                                     lojaAtual, "", "", novoSetorCodigo, "", "",
-                                    novaDesc, "", "", sessao.epc, "", ""
+                                    novaDescDet,          // descresumida
+                                    novaDescDet,          // descdetalhada
+                                    "",                   // qtdbem
+                                    sessao.epc, "", ""    // plaqueta / serie / modelo
                             );
                             sessao.item = itemNovoFake;
                             sessao.encontrado = true;
@@ -556,24 +625,48 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                             dialog.dismiss();
                             return;
                         } else {
-                            sessao.item.descresumida = novaDesc;
+                            // Agora editamos a DESCRIÇÃO DETALHADA
+                            sessao.item.descdetalhada = novaDescDet;
+
+                            // Se a resumida estiver vazia, podemos preencher com a detalhada
+                            if (sessao.item.descresumida == null || sessao.item.descresumida.trim().isEmpty()) {
+                                sessao.item.descresumida = novaDescDet;
+                            }
+
                             sessao.item.loja = lojaAtual;
                             sessao.item.codlocalizacao = novoSetorCodigo;
                         }
 
                         if (sessao.item != null && sessao.item.nroplaqueta != null) {
                             BancoHelper bancoHelper = new BancoHelper(getApplicationContext());
-                            bancoHelper.atualizarDescricaoESetor(sessao.item.nroplaqueta, novaDesc, novoSetorCodigo);
+                            // Aqui você decide qual coluna a função atualiza. Se ela hoje já
+                            // atualiza a "descrição detalhada", é só passar novaDescDet.
+                            bancoHelper.atualizarDescricaoESetor(sessao.item.nroplaqueta, novaDescDet, novoSetorCodigo);
                         }
                         // Verifica alterações (só registra se editou algo)
                         StringBuilder alteracoes = new StringBuilder();
                         if (itemAntigo != null) {
-                            if (!itemAntigo.descresumida.equals(novaDesc))
-                                alteracoes.append("Descrição: ").append(itemAntigo.descresumida).append(" -> ").append(novaDesc).append("; ");
-                            if (!itemAntigo.codlocalizacao.equals(novoSetorCodigo))
-                                alteracoes.append("Setor: ").append(itemAntigo.codlocalizacao).append(" -> ").append(novoSetorCodigo).append("; ");
-                        }
+                            String antigaDet = itemAntigo.descdetalhada != null ? itemAntigo.descdetalhada : "";
+                            String novaDet = novaDescDet != null ? novaDescDet : "";
 
+                            if (!antigaDet.equals(novaDet)) {
+                                alteracoes
+                                        .append("Descrição detalhada: ")
+                                        .append(antigaDet)
+                                        .append(" -> ")
+                                        .append(novaDet)
+                                        .append("; ");
+                            }
+
+                            if (!itemAntigo.codlocalizacao.equals(novoSetorCodigo)) {
+                                alteracoes
+                                        .append("Setor: ")
+                                        .append(itemAntigo.codlocalizacao)
+                                        .append(" -> ")
+                                        .append(novoSetorCodigo)
+                                        .append("; ");
+                            }
+                        }
                         if (alteracoes.length() > 0) {
                             LogHelper.logEdicaoItem(
                                     getApplicationContext(),

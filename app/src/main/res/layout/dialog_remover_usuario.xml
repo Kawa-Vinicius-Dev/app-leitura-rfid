@@ -4,42 +4,45 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="24dp">
+    android:padding="24dp"
+    android:background="@drawable/bg_dialog_rounded">
 
     <TextView
-        style="@style/TituloTela"
+        style="@style/TituloFuturista"
         android:layout_gravity="center"
         android:text="Remover Usuário" />
 
     <TextView
         android:id="@+id/tvMsgDialog"
+        style="@style/SubtituloFuturista"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
         android:gravity="center"
         android:layout_marginTop="8dp"
-        android:text="Qual o motivo da remoção?"
-        android:textColor="@color/text_secondary"
-        android:textSize="16sp" />
+        android:text="Selecione o motivo da ação:"/>
 
     <RadioGroup
         android:id="@+id/rgMotivo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:orientation="vertical">
+        android:background="@drawable/bg_input_futurista"
+        android:padding="16dp">
 
         <RadioButton
             android:id="@+id/rbDesligamento"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Desligamento de usuário"
-            android:checked="true"/>
+            android:checked="true"
+            android:buttonTint="@color/novo_atacarejo_blue"/>
 
         <RadioButton
             android:id="@+id/rbOutros"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Outros"/>
+            android:text="Outro motivo"
+            android:layout_marginTop="8dp"
+            android:buttonTint="@color/novo_atacarejo_blue"/>
     </RadioGroup>
 
     <LinearLayout
@@ -50,20 +53,21 @@
 
         <Button
             android:id="@+id/btnCancelarDialog"
-            style="@style/BotaoBase"
+            style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="0dp"
+            android:layout_height="52dp"
             android:layout_weight="1"
-            android:layout_marginEnd="8dp"
             android:text="Cancelar"
-            android:backgroundTint="@color/text_secondary"/>
+            android:textColor="@color/text_secondary"/>
 
         <Button
             android:id="@+id/btnRemoverDialog"
-            style="@style/BotaoPerigo"
+            style="@style/BotaoPerigoFuturista"
             android:layout_width="0dp"
+            android:layout_height="52dp"
             android:layout_weight="1"
-            android:layout_marginStart="8dp"
-            android:text="Remover"/>
+            android:text="Remover"
+            android:layout_marginStart="8dp"/>
     </LinearLayout>
 
 </LinearLayout>

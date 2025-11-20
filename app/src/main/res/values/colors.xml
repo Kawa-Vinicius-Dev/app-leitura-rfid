@@ -1,13 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="novo_atacarejo_red">#E52421</color>
     <color name="novo_atacarejo_blue">#0033A0</color>
+    <color name="novo_atacarejo_red">#E52421</color>
 
-    <color name="background_light">#F7F8FC</color> <color name="text_primary">#212121</color> <color name="text_secondary">#757575</color> <color name="divider">#E0E0E0</color> <color name="success_green">#4CAF50</color>
-    <color name="warning_yellow">#FFC107</color>
-    <color name="error_red">#D32F2F</color>
+    <color name="background_app">#F2F6FA</color> <color name="surface_white">#FFFFFF</color>
 
-    <color name="white">#FFFFFFFF</color>
+    <color name="text_primary">#1A237E</color> <color name="text_secondary">#7986CB</color> <color name="text_hint">#B0BEC5</color>
+
+    <color name="success_green">#00C853</color>
+    <color name="warning_yellow">#FFD600</color>
+    <color name="error_red">#FF1744</color>
+    <color name="divider">#E8EAF6</color>
+
+    <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
-    <color name="ic_launcher_background">#FFFFFF</color>
+
+    <color name="ic_launcher_background">#003399</color>
+
 </resources>

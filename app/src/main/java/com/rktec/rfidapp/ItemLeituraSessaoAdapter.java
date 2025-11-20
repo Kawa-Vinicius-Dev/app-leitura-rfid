@@ -8,6 +8,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
@@ -15,12 +16,11 @@ import java.util.List;
 public class ItemLeituraSessaoAdapter extends RecyclerView.Adapter<ItemLeituraSessaoAdapter.ViewHolder> {
 
     private List<ItemLeituraSessao> itens;
+    private OnItemClickListener listener;
 
     public interface OnItemClickListener {
         void onItemClick(int position);
     }
-
-    private OnItemClickListener listener;
 
     public ItemLeituraSessaoAdapter(List<ItemLeituraSessao> itens) {
         this.itens = itens;
@@ -42,54 +42,87 @@ public class ItemLeituraSessaoAdapter extends RecyclerView.Adapter<ItemLeituraSe
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ItemLeituraSessao sessao = itens.get(position);
 
-        // Quando existe um item associado (encontrado na base ou cadastrado manualmente)
+        // ---------------- DESCRIÇÃO (sempre descresumida) ----------------
+        String descricao;
+        if (!sessao.encontrado || sessao.item == null) {
+            descricao = "Item não cadastrado";
+        } else if (sessao.item.descdetalhada != null && !sessao.item.descdetalhada.trim().isEmpty()) {
+            descricao = sessao.item.descdetalhada.trim();
+        } else if (sessao.item.descresumida != null && !sessao.item.descresumida.trim().isEmpty()) {
+            descricao = sessao.item.descresumida.trim();
+        } else {
+            descricao = "Item sem descrição";
+        }
+        holder.tvDescricao.setText(descricao);
+
+        // ---------------- LOJA / SETOR / EPC ----------------
+        String loja = "-";
+        String setor = "-";
+
         if (sessao.item != null) {
-            String desc = (sessao.item.descresumida != null && !sessao.item.descresumida.isEmpty())
-                    ? sessao.item.descresumida
-                    : "Item encontrado";
-            holder.tvDescricao.setText(desc);
+            if (sessao.item.loja != null && !sessao.item.loja.trim().isEmpty()) {
+                loja = sessao.item.loja.trim();
+            }
+            // usa a coluna CODLOCALIZACAO como "setor"
+            if (sessao.item.codlocalizacao != null && !sessao.item.codlocalizacao.trim().isEmpty()) {
+                setor = sessao.item.codlocalizacao.trim();
+            }
+        }
 
-            String local = (sessao.item.codlocalizacao != null && !sessao.item.codlocalizacao.isEmpty())
-                    ? sessao.item.codlocalizacao
-                    : "-";
-            String subtexto = "Plaqueta: " + sessao.epc + " | Local: " + local;
+        if (sessao.encontrado && sessao.item != null) {
+            String subtexto = "Plaqueta: " + sessao.epc +
+                    " | Loja: " + loja +
+                    " | Setor: " + setor;
             holder.tvEp.setText(subtexto);
+        } else {
+            holder.tvEp.setText("EPC: " + sessao.epc);
+        }
 
-            // Ícone e cor de acordo com o status
+        // ---------------- ÍCONE E COR POR STATUS ----------------
+        int iconResId;
+        int corIcone;
+
+        if (!sessao.encontrado || sessao.item == null ||
+                sessao.status == ItemLeituraSessao.STATUS_NAO_ENCONTRADO) {
+
+            iconResId = R.drawable.ic_close;
+            corIcone = ContextCompat.getColor(
+                    holder.itemView.getContext(),
+                    R.color.error_red
+            );
+
+        } else {
             switch (sessao.status) {
                 case ItemLeituraSessao.STATUS_OK:
-                    // Loja e setor corretos → verde OK
-                    holder.iconStatus.setImageResource(R.drawable.ic_check);
-                    holder.iconStatus.setColorFilter(Color.parseColor("#4CAF50"));
+                    iconResId = R.drawable.ic_check;
+                    corIcone = ContextCompat.getColor(
+                            holder.itemView.getContext(),
+                            R.color.success_green
+                    );
                     break;
 
                 case ItemLeituraSessao.STATUS_SETOR_ERRADO:
-                    // Loja correta, setor diferente → amarelo
-                    holder.iconStatus.setImageResource(R.drawable.ic_check);
-                    holder.iconStatus.setColorFilter(Color.parseColor("#FFC107"));
+                    iconResId = R.drawable.ic_check;
+                    corIcone = Color.parseColor("#FFC107"); // amarelo
                     break;
 
                 case ItemLeituraSessao.STATUS_LOJA_ERRADA:
-                    // Item existe mas está em outra loja → ícone de loja, laranja
-                    holder.iconStatus.setImageResource(R.drawable.ic_store);
-                    holder.iconStatus.setColorFilter(Color.parseColor("#FF9800"));
+                    iconResId = R.drawable.ic_store;
+                    corIcone = Color.parseColor("#FB8C00"); // laranja
                     break;
 
-                case ItemLeituraSessao.STATUS_NAO_ENCONTRADO:
                 default:
-                    // Segurança: se marcar como não encontrado, trata como erro
-                    holder.iconStatus.setImageResource(R.drawable.ic_close);
-                    holder.iconStatus.setColorFilter(Color.parseColor("#F44336"));
+                    iconResId = R.drawable.ic_check;
+                    corIcone = ContextCompat.getColor(
+                            holder.itemView.getContext(),
+                            R.color.success_green
+                    );
                     break;
             }
-        } else {
-            // EPC não existe na base → item não cadastrado
-            holder.tvDescricao.setText("Item não cadastrado");
-            holder.tvEp.setText("EPC: " + sessao.epc);
-
-            holder.iconStatus.setImageResource(R.drawable.ic_close);
-            holder.iconStatus.setColorFilter(Color.parseColor("#F44336"));
         }
+
+        holder.iconStatus.setImageResource(iconResId);
+        holder.iconStatus.setColorFilter(corIcone);
     }
 
     @Override
@@ -104,6 +137,7 @@ public class ItemLeituraSessaoAdapter extends RecyclerView.Adapter<ItemLeituraSe
 
         public ViewHolder(@NonNull View itemView, OnItemClickListener listener) {
             super(itemView);
+
             tvDescricao = itemView.findViewById(R.id.tvDescricaoItem);
             tvEp = itemView.findViewById(R.id.tvEp);
             iconStatus = itemView.findViewById(R.id.icon_status);

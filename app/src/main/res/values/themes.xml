@@ -4,12 +4,10 @@
         <item name="colorPrimaryVariant">@color/novo_atacarejo_blue</item>
         <item name="colorOnPrimary">@color/white</item>
 
-        <item name="android:windowBackground">@color/background_light</item>
-
+        <item name="android:windowBackground">@color/background_app</item>
         <item name="android:statusBarColor">@color/novo_atacarejo_blue</item>
-        <item name="android:navigationBarColor">@color/background_light</item>
+        <item name="android:navigationBarColor">@color/background_app</item>
 
         <item name="alertDialogTheme">@style/AppDialogTheme</item>
     </style>
-
 </resources>
