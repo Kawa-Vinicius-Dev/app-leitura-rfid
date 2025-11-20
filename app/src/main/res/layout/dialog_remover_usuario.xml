@@ -9,6 +9,8 @@
 
     <TextView
         style="@style/TituloFuturista"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:text="Remover Usuário" />
 
@@ -16,6 +18,7 @@
         android:id="@+id/tvMsgDialog"
         style="@style/SubtituloFuturista"
         android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:gravity="center"
         android:layout_marginTop="8dp"
         android:text="Selecione o motivo da ação:"/>

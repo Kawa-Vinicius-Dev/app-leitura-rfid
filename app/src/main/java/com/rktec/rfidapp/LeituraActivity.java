@@ -158,17 +158,29 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
 
         SeekBar sbPotencia = findViewById(R.id.sbPotencia);
         TextView tvPotencia = findViewById(R.id.tvPotencia);
+
+// SeekBar vai de 0 a 32 → potência real 1..33
+        sbPotencia.setMax(32);
+
+// progress interno = potenciaAtual - 1
+        sbPotencia.setProgress(potenciaAtual - 1);
+
         tvPotencia.setText("Potência: " + potenciaAtual);
-        sbPotencia.setProgress(potenciaAtual);
+
         sbPotencia.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                potenciaAtual = progress;
+                // Garante faixa 1..33
+                potenciaAtual = progress + 1;
                 tvPotencia.setText("Potência: " + potenciaAtual);
-                if (leitorRFID != null) leitorRFID.setPotencia(potenciaAtual);
+                if (leitorRFID != null) {
+                    leitorRFID.setPotencia(potenciaAtual);
+                }
             }
+
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) { }
+
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) { }
         });
@@ -531,6 +543,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
     }
 
     // --- Dialog de edição para qualquer item lido ---
+    // --- Dialog de edição para qualquer item lido ---
     private void abrirDialogEdicao(ItemLeituraSessao sessao, int pos) {
         LayoutInflater inflater = LayoutInflater.from(this);
         View view = inflater.inflate(R.layout.dialog_editar_item_lido, null);
@@ -543,51 +556,70 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         Button btnSalvar = view.findViewById(R.id.btnSalvarDialog);
         Button btnCancelar = view.findViewById(R.id.btnCancelarDialog);
 
-        // Preenche campos usando a DESCRIÇÃO DETALHADA (fallback para a resumida)
+        // Loja atual: se o item tiver loja, usa ela; senão, usa a loja selecionada na sessão
+        String lojaAtual = (sessao.item != null && sessao.item.loja != null && !sessao.item.loja.trim().isEmpty())
+                ? sessao.item.loja.trim()
+                : (lojaSelecionada != null ? lojaSelecionada : "");
+
+        tvLoja.setText("Loja: " + lojaAtual);
+
+        // Preenche descrição (dá preferência à detalhada)
         if (sessao.item != null) {
             String textoDesc;
-
             if (sessao.item.descdetalhada != null && !sessao.item.descdetalhada.trim().isEmpty()) {
-                textoDesc = sessao.item.descdetalhada;
-            } else if (sessao.item.descresumida != null) {
-                textoDesc = sessao.item.descresumida;
+                textoDesc = sessao.item.descdetalhada.trim();
+            } else if (sessao.item.descresumida != null && !sessao.item.descresumida.trim().isEmpty()) {
+                textoDesc = sessao.item.descresumida.trim();
             } else {
                 textoDesc = "";
             }
-
             edtDesc.setText(textoDesc);
         } else {
             edtDesc.setText("");
         }
+
         tvPlaqueta.setText("Plaqueta: " + sessao.epc);
 
-        // Nome da loja (apenas visual, não editável)
-        String lojaAtual = sessao.item != null ? sessao.item.loja : lojaSelecionada;
-        tvLoja.setText("Loja: " + lojaAtual);
+        // ====== CARREGA APENAS SETORES DA LOJA ATUAL ======
+        // Carrega APENAS os setores da loja selecionada (mesma lógica da SetorActivity)
+        List<SetorLocalizacao> setoresFiltrados = filtrarPorLoja(listaSetores, lojaSelecionada);
 
-        // Carrega setores (exibe nome, mas salva o código)
         List<String> nomesSetores = new ArrayList<>();
-        for (SetorLocalizacao s : listaSetores) {
-            nomesSetores.add(s.setor);
+        for (SetorLocalizacao s : setoresFiltrados) {
+            nomesSetores.add(s.setor); // "LJ - PADARIA", "LJ - FRIOS", etc.
         }
-        ArrayAdapter<String> setorAdapter = new ArrayAdapter<>(LeituraActivity.this, android.R.layout.simple_spinner_item, nomesSetores);
+
+        ArrayAdapter<String> setorAdapter = new ArrayAdapter<>(
+                LeituraActivity.this,
+                android.R.layout.simple_spinner_item,
+                nomesSetores
+        );
         setorAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerSetor.setAdapter(setorAdapter);
+        // Seleciona o setor atual do item (busca o nome a partir do código, DENTRO da loja)
+        String setorAtualNome;
+        if (sessao.item != null && sessao.item.codlocalizacao != null) {
+            setorAtualNome = buscarNomeSetorPorCodigo(sessao.item.codlocalizacao);
+        } else if (setorSelecionado != null) {
+            setorAtualNome = setorSelecionado.setor;
+        } else {
+            setorAtualNome = null;
+        }
 
-        // Seleciona setor atual (busca nome pelo código)
-        String setorAtual = sessao.item != null
-                ? buscarNomeSetorPorCodigo(sessao.item.codlocalizacao)
-                : setorSelecionado.setor;
-        int setorIndex = nomesSetores.indexOf(setorAtual);
-        if (setorIndex >= 0) spinnerSetor.setSelection(setorIndex);
+        if (setorAtualNome != null) {
+            int idx = nomesSetores.indexOf(setorAtualNome);
+            if (idx >= 0) {
+                spinnerSetor.setSelection(idx);
+            }
+        }
 
-        // Cria dialog principal
+        // Cria dialog
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setView(view)
                 .setCancelable(false)
                 .create();
 
-        // Salvar com confirmação customizada
+        // SALVAR
         btnSalvar.setOnClickListener(v -> {
             mostrarDialogConfirmacao(
                     "Confirmar alteração",
@@ -599,7 +631,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                         String novoSetorNome = (String) spinnerSetor.getSelectedItem();
                         String novoSetorCodigo = buscarCodigoSetorPorNome(novoSetorNome);
 
-// Salva dados antigos antes de alterar (inclusive descdetalhada)
+                        // Guarda cópia antiga pra log
                         ItemPlanilha itemAntigo = null;
                         if (sessao.item != null) {
                             itemAntigo = new ItemPlanilha(
@@ -610,7 +642,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                         }
 
                         if (sessao.item == null) {
-                            // Item "fake" criado na sessão: usa a mesma string na resumida e detalhada
+                            // Item "fake" criado na sessão
                             ItemPlanilha itemNovoFake = new ItemPlanilha(
                                     lojaAtual, "", "", novoSetorCodigo, "", "",
                                     novaDescDet,          // descresumida
@@ -625,33 +657,28 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                             dialog.dismiss();
                             return;
                         } else {
-                            // Agora editamos a DESCRIÇÃO DETALHADA
+                            // Atualiza item real
                             sessao.item.descdetalhada = novaDescDet;
-
-                            // Se a resumida estiver vazia, podemos preencher com a detalhada
                             if (sessao.item.descresumida == null || sessao.item.descresumida.trim().isEmpty()) {
                                 sessao.item.descresumida = novaDescDet;
                             }
-
                             sessao.item.loja = lojaAtual;
                             sessao.item.codlocalizacao = novoSetorCodigo;
                         }
 
                         if (sessao.item != null && sessao.item.nroplaqueta != null) {
                             BancoHelper bancoHelper = new BancoHelper(getApplicationContext());
-                            // Aqui você decide qual coluna a função atualiza. Se ela hoje já
-                            // atualiza a "descrição detalhada", é só passar novaDescDet.
                             bancoHelper.atualizarDescricaoESetor(sessao.item.nroplaqueta, novaDescDet, novoSetorCodigo);
                         }
-                        // Verifica alterações (só registra se editou algo)
+
+                        // Loga alterações
                         StringBuilder alteracoes = new StringBuilder();
                         if (itemAntigo != null) {
                             String antigaDet = itemAntigo.descdetalhada != null ? itemAntigo.descdetalhada : "";
                             String novaDet = novaDescDet != null ? novaDescDet : "";
 
                             if (!antigaDet.equals(novaDet)) {
-                                alteracoes
-                                        .append("Descrição detalhada: ")
+                                alteracoes.append("Descrição detalhada: ")
                                         .append(antigaDet)
                                         .append(" -> ")
                                         .append(novaDet)
@@ -659,14 +686,14 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                             }
 
                             if (!itemAntigo.codlocalizacao.equals(novoSetorCodigo)) {
-                                alteracoes
-                                        .append("Setor: ")
+                                alteracoes.append("Setor: ")
                                         .append(itemAntigo.codlocalizacao)
                                         .append(" -> ")
                                         .append(novoSetorCodigo)
                                         .append("; ");
                             }
                         }
+
                         if (alteracoes.length() > 0) {
                             LogHelper.logEdicaoItem(
                                     getApplicationContext(),
@@ -686,7 +713,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
             );
         });
 
-        // Remover com confirmação customizada
+        // REMOVER
         btnRemover.setOnClickListener(v -> {
             mostrarDialogConfirmacao(
                     "Remover item",
@@ -694,12 +721,10 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                     "Tem certeza que deseja salvar as alterações e remover esse item da lista?\n\nEsta ação não pode ser desfeita.",
                     "Remover",
                     () -> {
-                        // --- SALVA ALTERAÇÕES ANTES DE REMOVER ---
                         String novaDesc = edtDesc.getText().toString();
                         String novoSetorNome = (String) spinnerSetor.getSelectedItem();
                         String novoSetorCodigo = buscarCodigoSetorPorNome(novoSetorNome);
 
-                        // Salva dados antigos antes de alterar
                         ItemPlanilha itemAntigo = null;
                         if (sessao.item != null) {
                             itemAntigo = new ItemPlanilha(
@@ -707,28 +732,35 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                                     sessao.item.nroincorp, sessao.item.descresumida, sessao.item.descdetalhada, sessao.item.qtdbem,
                                     sessao.item.nroplaqueta, sessao.item.nroseriebem, sessao.item.modelobem
                             );
-                        }
 
-                        if (sessao.item != null) {
                             sessao.item.descresumida = novaDesc;
                             sessao.item.codlocalizacao = novoSetorCodigo;
-                            sessao.item.loja = lojaAtual; // só pra garantir
+                            sessao.item.loja = lojaAtual;
 
-                            // Atualiza no banco se for item real (se não for fake/temporário)
                             if (sessao.item.nroplaqueta != null) {
                                 BancoHelper bancoHelper = new BancoHelper(getApplicationContext());
                                 bancoHelper.atualizarDescricaoESetor(sessao.item.nroplaqueta, novaDesc, novoSetorCodigo);
                             }
                         }
 
-                        // Log de edição (se mudou algo)
                         StringBuilder alteracoes = new StringBuilder();
                         if (itemAntigo != null) {
-                            if (!itemAntigo.descresumida.equals(novaDesc))
-                                alteracoes.append("Descrição: ").append(itemAntigo.descresumida).append(" -> ").append(novaDesc).append("; ");
-                            if (!itemAntigo.codlocalizacao.equals(novoSetorCodigo))
-                                alteracoes.append("Setor: ").append(itemAntigo.codlocalizacao).append(" -> ").append(novoSetorCodigo).append("; ");
+                            if (!itemAntigo.descresumida.equals(novaDesc)) {
+                                alteracoes.append("Descrição: ")
+                                        .append(itemAntigo.descresumida)
+                                        .append(" -> ")
+                                        .append(novaDesc)
+                                        .append("; ");
+                            }
+                            if (!itemAntigo.codlocalizacao.equals(novoSetorCodigo)) {
+                                alteracoes.append("Setor: ")
+                                        .append(itemAntigo.codlocalizacao)
+                                        .append(" -> ")
+                                        .append(novoSetorCodigo)
+                                        .append("; ");
+                            }
                         }
+
                         if (alteracoes.length() > 0) {
                             LogHelper.logEdicaoItem(
                                     getApplicationContext(),
@@ -741,37 +773,122 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                             );
                         }
 
-                        // --- AGORA REMOVE DA LISTA TEMPORÁRIA ---
                         itensSessao.remove(pos);
                         adapter.notifyDataSetChanged();
-                        dialog.dismiss();
                         atualizarContadorItens();
+                        dialog.dismiss();
                     }
             );
         });
-
 
         btnCancelar.setOnClickListener(v -> dialog.dismiss());
 
         dialog.show();
     }
-
     // Métodos auxiliares pra lidar com código e nome do setor
+    // Busca o NOME do setor a partir do CÓDIGO, dentro da loja informada
+    // Busca o NOME do setor a partir do CÓDIGO, só dentro da loja selecionada
     private String buscarNomeSetorPorCodigo(String codlocalizacao) {
-        for (SetorLocalizacao s : listaSetores) {
-            if (s.codlocalizacao.equals(codlocalizacao)) {
+        if (codlocalizacao == null) return codlocalizacao;
+
+        List<SetorLocalizacao> setoresFiltrados = filtrarPorLoja(listaSetores, lojaSelecionada);
+        String codNorm = codlocalizacao.trim();
+
+        for (SetorLocalizacao s : setoresFiltrados) {
+            if (s.codlocalizacao != null && s.codlocalizacao.trim().equals(codNorm)) {
                 return s.setor;
             }
         }
-        return codlocalizacao; // fallback se não achar
+        return codNorm; // fallback se não encontrar
     }
 
+    // Busca o CÓDIGO do setor a partir do NOME, só dentro da loja selecionada
     private String buscarCodigoSetorPorNome(String nomeSetor) {
-        for (SetorLocalizacao s : listaSetores) {
-            if (s.setor.equals(nomeSetor)) {
+        if (nomeSetor == null) return nomeSetor;
+
+        List<SetorLocalizacao> setoresFiltrados = filtrarPorLoja(listaSetores, lojaSelecionada);
+        String nomeNorm = nomeSetor.trim();
+
+        for (SetorLocalizacao s : setoresFiltrados) {
+            if (s.setor != null && s.setor.trim().equals(nomeNorm)) {
                 return s.codlocalizacao;
             }
         }
-        return nomeSetor; // fallback se não achar
+        return nomeNorm; // fallback se não encontrar
     }
+
+    /**
+     * Filtra a lista de setores pela loja selecionada.
+     * Mesmo comportamento da SetorActivity.
+     */
+    private List<SetorLocalizacao> filtrarPorLoja(List<SetorLocalizacao> todos, String lojaSelecionada) {
+        List<SetorLocalizacao> resultado = new ArrayList<>();
+        if (todos == null || todos.isEmpty()) return resultado;
+
+        String codigoLoja = extrairCodigoLoja(lojaSelecionada); // ex.: "001-CARPINA" -> "1"
+        if (codigoLoja == null || codigoLoja.isEmpty()) {
+            // Não achou código de loja, devolve tudo mesmo
+            resultado.addAll(todos);
+            return resultado;
+        }
+
+        for (SetorLocalizacao s : todos) {
+            if (s == null) continue;
+            if (codigoLoja.equals(s.loja)) {
+                resultado.add(s);
+            }
+        }
+
+        // Se por algum motivo não achou nada, devolve tudo pra não ficar vazio
+        if (resultado.isEmpty()) {
+            resultado.addAll(todos);
+        }
+
+        return resultado;
+    }
+
+    /**
+     * Mesmo extrairCodigoLoja da SetorActivity.
+     *
+     * Exemplos:
+     *  "001-CARPINA"   -> "1"
+     *  "002-VIT.SA"    -> "2"
+     *  "500-MATRIZ"    -> "500"
+     */
+    private String extrairCodigoLoja(String lojaSelecionada) {
+        if (lojaSelecionada == null) return null;
+        String s = lojaSelecionada.trim();
+        if (s.isEmpty()) return null;
+
+        // pega tudo antes do primeiro hífen
+        int idx = s.indexOf('-');
+        String numero = (idx > 0) ? s.substring(0, idx).trim() : s;
+
+        // mantém só dígitos
+        numero = numero.replaceAll("\\D+", "");
+        if (numero.isEmpty()) return null;
+
+        // remove zeros à esquerda ("001" -> "1")
+        if (numero.matches("^\\d+$")) {
+            numero = numero.replaceFirst("^0+(?!$)", "");
+        }
+
+        return numero;
+    }
+
+    // Retorna apenas os setores da loja informada
+    private List<SetorLocalizacao> getSetoresDaLoja(String loja) {
+        List<SetorLocalizacao> result = new ArrayList<>();
+        if (listaSetores == null || loja == null) return result;
+
+        String lojaNorm = loja.trim();
+        for (SetorLocalizacao s : listaSetores) {
+            if (s == null || s.loja == null) continue;
+            if (lojaNorm.equals(s.loja.trim())) {
+                result.add(s);
+            }
+        }
+        return result;
+    }
+
 }

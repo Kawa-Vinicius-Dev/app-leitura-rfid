@@ -10,8 +10,9 @@
     <TextView
         style="@style/TituloFuturista"
         android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:text="Editar Detalhes"
-        android:gravity="center"/>
+        android:gravity="center" />
 
     <TextView
         android:id="@+id/tvPlaquetaDialog"

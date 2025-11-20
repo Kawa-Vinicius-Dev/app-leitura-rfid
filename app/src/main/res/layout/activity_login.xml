@@ -7,87 +7,91 @@
     android:background="@color/background_app"
     android:padding="24dp">
 
-   <ImageView
-       android:id="@+id/imgLogo"
-       android:layout_width="200dp"
-       android:layout_height="100dp"
-       android:src="@drawable/logo_novo_atacarejo"
-       app:layout_constraintBottom_toTopOf="@+id/cardLogin"
-       app:layout_constraintEnd_toEndOf="parent"
-       app:layout_constraintStart_toStartOf="parent"
-       app:layout_constraintTop_toTopOf="parent"
-       app:layout_constraintVertical_bias="0.4" />
+    <ImageView
+        android:id="@+id/imgLogo"
+        android:layout_width="200dp"
+        android:layout_height="100dp"
+        android:src="@drawable/logo_novo_atacarejo"
+        app:layout_constraintBottom_toTopOf="@+id/cardLogin"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.4" />
 
-   <androidx.cardview.widget.CardView
-       android:id="@+id/cardLogin"
-       android:layout_width="match_parent"
-       android:layout_height="wrap_content"
-       app:cardCornerRadius="24dp"
-       app:cardElevation="8dp"
-       app:layout_constraintBottom_toBottomOf="parent"
-       app:layout_constraintTop_toTopOf="parent"
-       app:layout_constraintVertical_bias="0.6">
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardLogin"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.6">
 
-      <LinearLayout
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:orientation="vertical"
-          android:padding="32dp">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="32dp">
 
-         <TextView
-             style="@style/TituloFuturista"
-             android:layout_width="match_parent"
-             android:gravity="center"
-             android:text="Acesso ao Sistema"
-             android:layout_marginBottom="8dp"/>
+            <TextView
+                style="@style/TituloFuturista"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Acesso ao Sistema"
+                android:layout_marginBottom="8dp"/>
 
-         <TextView
-             style="@style/SubtituloFuturista"
-             android:layout_width="match_parent"
-             android:gravity="center"
-             android:text="Entre com suas credenciais"
-             android:layout_marginBottom="24dp"/>
+            <TextView
+                style="@style/SubtituloFuturista"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Entre com suas credenciais"
+                android:gravity="center" />
 
-         <EditText
-             android:id="@+id/edtNomeUsuario"
-             style="@style/EditTextFuturista"
-             android:layout_width="match_parent"
-             android:layout_height="wrap_content"
-             android:hint="Usuário"
-             android:inputType="textPersonName"
-             android:drawableStart="@drawable/ic_people"
-             android:drawablePadding="12dp"
-             android:drawableTint="@color/novo_atacarejo_blue"
-             android:layout_marginBottom="16dp"/>
+            <EditText
+                android:id="@+id/edtNomeUsuario"
+                style="@style/EditTextFuturista"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Usuário"
+                android:inputType="textPersonName"
+                android:drawableStart="@drawable/ic_people"
+                android:drawablePadding="12dp"
+                android:drawableTint="@color/novo_atacarejo_blue"
+                android:layout_marginBottom="16dp"/>
 
-         <EditText
-             android:id="@+id/edtSenha"
-             style="@style/EditTextFuturista"
-             android:layout_width="match_parent"
-             android:layout_height="wrap_content"
-             android:hint="Senha"
-             android:inputType="textPassword"
-             android:drawableStart="@drawable/ic_settings"
-             android:drawablePadding="12dp"
-             android:drawableTint="@color/novo_atacarejo_blue"
-             android:layout_marginBottom="24dp"/>
-         <Button
-             android:id="@+id/btnEntrar"
-             style="@style/BotaoFuturista"
-             android:text="Entrar" />
+            <EditText
+                android:id="@+id/edtSenha"
+                style="@style/EditTextFuturista"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Senha"
+                android:inputType="textPassword"
+                android:drawableStart="@drawable/ic_settings"
+                android:drawablePadding="12dp"
+                android:drawableTint="@color/novo_atacarejo_blue"
+                android:layout_marginBottom="24dp"/>
 
-         <TextView
-             android:id="@+id/tvCadastro"
-             android:layout_width="match_parent"
-             android:layout_height="wrap_content"
-             android:layout_marginTop="24dp"
-             android:gravity="center"
-             android:text="Criar nova conta"
-             android:textColor="@color/novo_atacarejo_blue"
-             android:textStyle="bold"
-             android:background="?attr/selectableItemBackground"/>
+            <Button
+                android:id="@+id/btnEntrar"
+                style="@style/BotaoFuturista"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Entrar" />
 
-      </LinearLayout>
-   </androidx.cardview.widget.CardView>
+            <TextView
+                android:id="@+id/tvCadastro"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:gravity="center"
+                android:text="Criar nova conta"
+                android:textColor="@color/novo_atacarejo_blue"
+                android:textStyle="bold"
+                android:background="?attr/selectableItemBackground"/>
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

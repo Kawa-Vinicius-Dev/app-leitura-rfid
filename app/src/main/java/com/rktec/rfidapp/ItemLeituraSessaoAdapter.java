@@ -42,14 +42,16 @@ public class ItemLeituraSessaoAdapter extends RecyclerView.Adapter<ItemLeituraSe
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ItemLeituraSessao sessao = itens.get(position);
 
-        // ---------------- DESCRIÇÃO (sempre descresumida) ----------------
+        // ---------------- DESCRIÇÃO (prioriza descresumida) ----------------
         String descricao;
         if (!sessao.encontrado || sessao.item == null) {
             descricao = "Item não cadastrado";
-        } else if (sessao.item.descdetalhada != null && !sessao.item.descdetalhada.trim().isEmpty()) {
-            descricao = sessao.item.descdetalhada.trim();
         } else if (sessao.item.descresumida != null && !sessao.item.descresumida.trim().isEmpty()) {
+            // Prioriza SEMPRE a descrição resumida
             descricao = sessao.item.descresumida.trim();
+        } else if (sessao.item.descdetalhada != null && !sessao.item.descdetalhada.trim().isEmpty()) {
+            // Só cai pra detalhada se a resumida estiver vazia
+            descricao = sessao.item.descdetalhada.trim();
         } else {
             descricao = "Item sem descrição";
         }

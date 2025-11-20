@@ -11,6 +11,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.cardview.widget.CardView;
 import android.widget.ImageView;
+import android.graphics.Color;
 import androidx.cardview.widget.CardView;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -32,8 +33,7 @@ public class MainActivity extends AppCompatActivity {
     private List<ItemPlanilha> listaPlanilha = new ArrayList<>();
     private List<SetorLocalizacao> listaSetores = new ArrayList<>();
 
-    // ANTES
-// private Button btnImportarPlanilha, btnImportarSetor, btnGerenciarUsuarios, btnLogout;
+    private AlertDialog loadingDialog;
 
     // DEPOIS
     private CardView btnImportarPlanilha, btnImportarSetor, btnGerenciarUsuarios;
@@ -92,65 +92,126 @@ public class MainActivity extends AppCompatActivity {
         btnLimparSetor.setOnClickListener(v -> mostrarDialogoDeLimpeza("setores"));
 
         // Importar PLANILHA principal
+        // Importar PLANILHA principal
+        // Importar PLANILHA principal
         importarPlanilhaLauncher = registerForActivityResult(
                 new ActivityResultContracts.GetContent(),
                 uri -> {
                     if (uri == null) return;
 
-                    listaPlanilha = ImportadorPlanilha.importar(this, uri);
-                    DadosGlobais.getInstance().setListaPlanilha(listaPlanilha);
+                    // 🔹 Feedback imediato: volta pro app e mostra loading
+                    mostrarLoading("Importando planilha, aguarde...");
 
-                    if (listaPlanilha == null || listaPlanilha.isEmpty()) {
-                        Toast.makeText(this, "Erro: Nenhum item importado! Verifique a planilha.", Toast.LENGTH_LONG).show();
-                        resetarEstadoBotaoPlanilha();
-                    } else {
-                        // Se já temos setores, aplica o mapeamento agora
-                        if (listaSetores != null && !listaSetores.isEmpty()) {
-                            Map<String, String> mapa = ImportadorSetor.toMap(listaSetores);
-                            MapeadorSetor.aplicar(listaPlanilha, mapa);
-                        }
+                    new Thread(() -> {
+                        // roda FORA da UI thread
+                        List<ItemPlanilha> importada = ImportadorPlanilha.importar(MainActivity.this, uri);
 
-                        tvStatusPlanilha.setText("Planilha OK (" + listaPlanilha.size() + " itens)");
-                        btnImportarPlanilha.setEnabled(false);
-                        btnImportarPlanilha.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.success_green)));
-                        imgIconPlanilha.setImageResource(R.drawable.ic_check);
+                        runOnUiThread(() -> {
+                            // volta pra UI
+                            esconderLoading();
 
-                        btnLimparPlanilha.setVisibility(View.VISIBLE);
-                        Toast.makeText(this, "Importados " + listaPlanilha.size() + " itens!", Toast.LENGTH_SHORT).show();
-                    }
+                            listaPlanilha = (importada != null) ? importada : new ArrayList<>();
+                            DadosGlobais.getInstance().setListaPlanilha(listaPlanilha);
+
+                            if (listaPlanilha == null || listaPlanilha.isEmpty()) {
+                                Toast.makeText(MainActivity.this, "Erro: Nenhum item importado! Verifique a planilha.", Toast.LENGTH_LONG).show();
+                                resetarEstadoBotaoPlanilha();
+                            } else {
+                                // Se já temos setores, aplica o mapeamento agora
+                                if (listaSetores != null && !listaSetores.isEmpty()) {
+                                    Map<String, String> mapa = ImportadorSetor.toMap(listaSetores);
+                                    MapeadorSetor.aplicar(listaPlanilha, mapa);
+                                }
+
+                                // 🔹 Feedback visual amigável
+                                tvStatusPlanilha.setText("Planilha carregada (" + listaPlanilha.size() + " itens)");
+
+                                // Card “travado” em cinza suave (não mais verdão)
+                                btnImportarPlanilha.setEnabled(false);
+                                btnImportarPlanilha.setCardBackgroundColor(Color.parseColor("#F5F5F5"));
+
+                                // Ícone de check verde
+                                imgIconPlanilha.setImageResource(R.drawable.ic_check);
+                                imgIconPlanilha.setColorFilter(
+                                        ContextCompat.getColor(MainActivity.this, R.color.success_green)
+                                );
+
+                                btnLimparPlanilha.setVisibility(View.VISIBLE);
+                                Toast.makeText(MainActivity.this, "Importados " + listaPlanilha.size() + " itens!", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }).start();
                 }
         );
 
-        // Importar SETORES (2 colunas: código → nome)
         importarSetorLauncher = registerForActivityResult(
                 new ActivityResultContracts.GetContent(),
                 uri -> {
                     if (uri == null) return;
 
-                    listaSetores = ImportadorSetor.importar(this, uri);
-                    DadosGlobais.getInstance().setListaSetores(listaSetores);
+                    mostrarLoading("Importando setores, aguarde...");
 
-                    if (listaSetores == null || listaSetores.isEmpty()) {
-                        Toast.makeText(this, "Erro: Nenhum setor importado!", Toast.LENGTH_LONG).show();
-                        resetarEstadoBotaoSetor();
-                    } else {
-                        // Se já temos planilha, aplica o mapeamento agora
-                        if (listaPlanilha != null && !listaPlanilha.isEmpty()) {
-                            Map<String, String> mapa = ImportadorSetor.toMap(listaSetores);
-                            MapeadorSetor.aplicar(listaPlanilha, mapa);
-                            // (Opcional) atualize algo visual se quiser mostrar que os nomes foram aplicados
-                        }
+                    new Thread(() -> {
+                        List<SetorLocalizacao> importados = ImportadorSetor.importar(MainActivity.this, uri);
 
-                        tvStatusSetor.setText("Setores OK (" + listaSetores.size() + ")");
-                        btnImportarSetor.setEnabled(false);
-                        btnImportarSetor.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.success_green)));
-                        imgIconSetor.setImageResource(R.drawable.ic_check);
+                        runOnUiThread(() -> {
+                            esconderLoading();
 
-                        btnLimparSetor.setVisibility(View.VISIBLE);
-                        Toast.makeText(this, "Importados " + listaSetores.size() + " setores!", Toast.LENGTH_SHORT).show();
-                    }
+                            listaSetores = (importados != null) ? importados : new ArrayList<>();
+                            DadosGlobais.getInstance().setListaSetores(listaSetores);
+
+                            if (listaSetores == null || listaSetores.isEmpty()) {
+                                Toast.makeText(MainActivity.this, "Erro: Nenhum setor importado!", Toast.LENGTH_LONG).show();
+                                resetarEstadoBotaoSetor();
+                            } else {
+                                if (listaPlanilha != null && !listaPlanilha.isEmpty()) {
+                                    Map<String, String> mapa = ImportadorSetor.toMap(listaSetores);
+                                    MapeadorSetor.aplicar(listaPlanilha, mapa);
+                                }
+
+                                tvStatusSetor.setText("Setores carregados (" + listaSetores.size() + ")");
+
+                                btnImportarSetor.setEnabled(false);
+                                btnImportarSetor.setCardBackgroundColor(Color.parseColor("#F5F5F5"));
+
+                                imgIconSetor.setImageResource(R.drawable.ic_check);
+                                imgIconSetor.setColorFilter(
+                                        ContextCompat.getColor(MainActivity.this, R.color.success_green)
+                                );
+
+                                btnLimparSetor.setVisibility(View.VISIBLE);
+                                Toast.makeText(MainActivity.this, "Importados " + listaSetores.size() + " setores!", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }).start();
                 }
         );
+    }
+
+    private void mostrarLoading(String mensagem) {
+        if (loadingDialog == null) {
+            View view = getLayoutInflater().inflate(R.layout.dialog_loading, null);
+            TextView tvMsg = view.findViewById(R.id.tvLoadingMsg);
+            tvMsg.setText(mensagem);
+
+            loadingDialog = new AlertDialog.Builder(this, R.style.AppDialogTheme)
+                    .setView(view)
+                    .setCancelable(false)
+                    .create();
+            loadingDialog.show();
+        } else {
+            if (!loadingDialog.isShowing()) {
+                loadingDialog.show();
+            }
+            TextView tvMsg = loadingDialog.findViewById(R.id.tvLoadingMsg);
+            if (tvMsg != null) tvMsg.setText(mensagem);
+        }
+    }
+
+    private void esconderLoading() {
+        if (loadingDialog != null && loadingDialog.isShowing()) {
+            loadingDialog.dismiss();
+        }
     }
 
     private void mostrarDialogoDeLimpeza(String tipoArquivo) {
@@ -193,10 +254,17 @@ public class MainActivity extends AppCompatActivity {
     private void resetarEstadoBotaoPlanilha() {
         listaPlanilha.clear();
         DadosGlobais.getInstance().setListaPlanilha(null);
+
         tvStatusPlanilha.setText("Importar Dados");
+
         btnImportarPlanilha.setEnabled(true);
-        btnImportarPlanilha.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.novo_atacarejo_blue)));
+        btnImportarPlanilha.setCardBackgroundColor(Color.WHITE);
+
         imgIconPlanilha.setImageResource(R.drawable.ic_upload_file);
+        imgIconPlanilha.setColorFilter(
+                ContextCompat.getColor(this, R.color.novo_atacarejo_blue)
+        );
+
         btnLimparPlanilha.setVisibility(View.GONE);
         Toast.makeText(this, "Planilha descartada.", Toast.LENGTH_SHORT).show();
     }
@@ -204,10 +272,17 @@ public class MainActivity extends AppCompatActivity {
     private void resetarEstadoBotaoSetor() {
         listaSetores.clear();
         DadosGlobais.getInstance().setListaSetores(null);
+
         tvStatusSetor.setText("Importar Setores");
+
         btnImportarSetor.setEnabled(true);
-        btnImportarSetor.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.novo_atacarejo_blue)));
+        btnImportarSetor.setCardBackgroundColor(Color.WHITE);
+
         imgIconSetor.setImageResource(R.drawable.ic_upload_file);
+        imgIconSetor.setColorFilter(
+                ContextCompat.getColor(this, R.color.novo_atacarejo_blue)
+        );
+
         btnLimparSetor.setVisibility(View.GONE);
         Toast.makeText(this, "Setores descartados.", Toast.LENGTH_SHORT).show();
     }
