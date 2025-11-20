@@ -165,14 +165,14 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
 // progress interno = potenciaAtual - 1
         sbPotencia.setProgress(potenciaAtual - 1);
 
-        tvPotencia.setText("Potência: " + potenciaAtual);
+        tvPotencia.setText(String.valueOf(potenciaAtual));
 
         sbPotencia.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 // Garante faixa 1..33
-                potenciaAtual = progress + 1;
-                tvPotencia.setText("Potência: " + potenciaAtual);
+                potenciaAtual = progress;
+                tvPotencia.setText(String.valueOf(potenciaAtual));
                 if (leitorRFID != null) {
                     leitorRFID.setPotencia(potenciaAtual);
                 }

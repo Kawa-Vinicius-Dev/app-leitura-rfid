@@ -206,6 +206,7 @@
         android:padding="24dp"
         app:layout_constraintBottom_toBottomOf="parent">
 
+        <!-- Linha de Potência -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -244,9 +245,9 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="@color/novo_atacarejo_blue"
-                android:layout_width="30dp"
-                android:gravity="end"
-                android:layout_height="wrap_content" />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp" />
         </LinearLayout>
 
         <Button
