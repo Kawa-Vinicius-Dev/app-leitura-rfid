@@ -5,11 +5,15 @@ import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.EditText;
+import android.text.Editable;
+import android.text.TextWatcher;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class SetorActivity extends AppCompatActivity {
 
@@ -36,23 +40,71 @@ public class SetorActivity extends AppCompatActivity {
         // Agora filtramos só os setores da loja escolhida
         List<SetorLocalizacao> setoresFiltrados = filtrarPorLoja(todosSetores, lojaSelecionada);
 
-        // Monta a lista de nomes para o ListView
-        List<String> nomes = new ArrayList<>();
+        // Lista base com todos os nomes (originais)
+        List<String> nomesOriginais = new ArrayList<>();
         for (SetorLocalizacao s : setoresFiltrados) {
-            nomes.add(s.setor); // já vem sem "LOJA >" / "MATRIZ >"
+            nomesOriginais.add(s.setor);
         }
 
-        ListView lv = findViewById(R.id.listViewSetores);
-        lv.setAdapter(new ArrayAdapter<>(this,
-                android.R.layout.simple_list_item_1,
-                nomes
-        ));
+        // Lista que é de fato mostrada na tela (filtrada)
+        List<String> nomesFiltrados = new ArrayList<>(nomesOriginais);
 
+        ListView lv = findViewById(R.id.listViewSetores);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_list_item_1,
+                nomesFiltrados
+        );
+        lv.setAdapter(adapter);
+
+        // Barra de busca
+        EditText edtBusca = findViewById(R.id.editSearchSetor);
+        edtBusca.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String filtro = s.toString().toLowerCase(Locale.ROOT).trim();
+
+                nomesFiltrados.clear();
+
+                if (filtro.isEmpty()) {
+                    // Sem texto: mostra todos os setores da loja
+                    nomesFiltrados.addAll(nomesOriginais);
+                } else {
+                    // Contém em qualquer parte do nome do setor
+                    for (String nome : nomesOriginais) {
+                        if (nome.toLowerCase(Locale.ROOT).contains(filtro)) {
+                            nomesFiltrados.add(nome);
+                        }
+                    }
+                }
+
+                adapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        // Ao clicar, pega o nome filtrado e localiza o objeto SetorLocalizacao correspondente
         lv.setOnItemClickListener((p, v, pos, id) -> {
-            // Salva o setor escolhido e vai pra tela de leitura
-            dados.setSetorSelecionado(setoresFiltrados.get(pos));
-            startActivity(new Intent(this, LeituraActivity.class));
-            finish();
+            String nomeEscolhido = nomesFiltrados.get(pos);
+
+            SetorLocalizacao escolhido = null;
+            for (SetorLocalizacao s : setoresFiltrados) {
+                if (s.setor.equals(nomeEscolhido)) {
+                    escolhido = s;
+                    break;
+                }
+            }
+
+            if (escolhido != null) {
+                dados.setSetorSelecionado(escolhido);
+                startActivity(new Intent(this, LeituraActivity.class));
+                finish();
+            }
         });
     }
 

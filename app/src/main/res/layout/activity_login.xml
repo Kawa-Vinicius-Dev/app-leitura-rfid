@@ -42,13 +42,6 @@
                 android:text="Acesso ao Sistema"
                 android:layout_marginBottom="8dp"/>
 
-            <TextView
-                style="@style/SubtituloFuturista"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Entre com suas credenciais"
-                android:gravity="center" />
-
             <EditText
                 android:id="@+id/edtNomeUsuario"
                 style="@style/EditTextFuturista"
