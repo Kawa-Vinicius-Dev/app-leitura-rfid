@@ -15,7 +15,43 @@ public class UsuarioDAO {
         db = helper.getWritableDatabase();
     }
 
+    public boolean existeCEO() {
+        Cursor c = db.rawQuery(
+                "SELECT COUNT(*) FROM usuarios WHERE UPPER(permissao) = 'CEO'",
+                null
+        );
+        boolean existe = false;
+        if (c.moveToFirst()) {
+            existe = c.getInt(0) > 0;
+        }
+        c.close();
+        return existe;
+    }
+
+    public boolean haAlgumUsuario() {
+        Cursor c = db.rawQuery("SELECT COUNT(*) FROM usuarios", null);
+        boolean existe = false;
+        if (c.moveToFirst()) {
+            existe = c.getInt(0) > 0;
+        }
+        c.close();
+        return existe;
+    }
+
+
     public boolean cadastrarUsuario(String nome, String senha, String permissao) {
+        // Normaliza permissão
+        if (permissao == null || permissao.trim().isEmpty()) {
+            permissao = "MEMBRO";
+        } else {
+            permissao = permissao.trim().toUpperCase();
+        }
+
+        // SE NÃO EXISTE NENHUM USUÁRIO → PRIMEIRO SEMPRE É CEO
+        if (!haAlgumUsuario()) {
+            permissao = "CEO";
+        }
+
         ContentValues values = new ContentValues();
         values.put("nome", nome);
         values.put("senha", senha);
@@ -39,6 +75,29 @@ public class UsuarioDAO {
         }
         c.close();
         return null;
+    }
+
+    public boolean atualizarPermissaoUsuario(String nome, String novaPermissao) {
+        if (nome == null || nome.trim().isEmpty()) return false;
+
+        ContentValues values = new ContentValues();
+        values.put("permissao", novaPermissao);
+
+        int linhas = db.update("usuarios", values, "nome = ?", new String[]{nome});
+        return linhas > 0;
+    }
+
+    public String getNomeCEO() {
+        String nomeCEO = null;
+        Cursor c = db.rawQuery(
+                "SELECT nome FROM usuarios WHERE UPPER(permissao) = 'CEO' LIMIT 1",
+                null
+        );
+        if (c.moveToFirst()) {
+            nomeCEO = c.getString(0);
+        }
+        c.close();
+        return nomeCEO;
     }
 
     public boolean existeUsuario(String nome) {

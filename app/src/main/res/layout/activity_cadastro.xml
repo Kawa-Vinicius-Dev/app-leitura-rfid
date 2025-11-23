@@ -65,14 +65,18 @@
                 android:drawableTint="@color/novo_atacarejo_blue"
                 android:layout_marginBottom="16dp"/>
 
+            <!-- NOVO CAMPO: repetir senha -->
             <EditText
-                android:id="@+id/edtCodigoAdm"
+                android:id="@+id/edtRepetirSenhaCadastro"
                 style="@style/EditTextFuturista"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Código ADM (Opcional)"
-                android:inputType="text"
-                android:layout_marginBottom="24dp"/>
+                android:hint="Repetir senha"
+                android:inputType="textPassword"
+                android:drawableStart="@drawable/ic_settings"
+                android:drawablePadding="12dp"
+                android:drawableTint="@color/novo_atacarejo_blue"
+                android:layout_marginBottom="16dp"/>
 
             <Button
                 android:id="@+id/btnCadastrar"
@@ -85,7 +89,7 @@
                 android:id="@+id/tvVoltarLogin"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Voltar para Login"
+                android:text="Voltar"
                 android:textColor="@color/text_secondary"
                 android:gravity="center"
                 android:padding="16dp"

@@ -1,6 +1,7 @@
 package com.rktec.rfidapp;
 
 import android.os.Bundle;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import androidx.appcompat.app.AppCompatActivity;
 import java.util.List;
@@ -19,11 +20,14 @@ public class GerenciarUsuariosActivity extends AppCompatActivity {
         listaUsuarios = findViewById(R.id.listaUsuarios);
         dao = new UsuarioDAO(this);
 
+        ImageButton btnVoltar = findViewById(R.id.btnBack);
+        btnVoltar.setOnClickListener(v -> finish());
+
         atualizarListaUsuarios();
     }
 
     private void atualizarListaUsuarios() {
-        List<Usuario> usuarios = dao.getTodosUsuariosObj(); // Retorna lista de Usuario, não String!
+        List<Usuario> usuarios = dao.getTodosUsuariosObj();
         adapter = new UsuarioAdapter(this, usuarios, dao, this::atualizarListaUsuarios);
         listaUsuarios.setAdapter(adapter);
     }

@@ -16,25 +16,31 @@ public class ImportadorPlanilha {
     private static final String TAG = "ImportadorPlanilha";
 
     /**
-     * Cabeçalho esperado (na ordem que você mandou):
+     * Cabeçalhos aceitos:
      *
+     * Layout antigo (exemplo):
      * EMPRESA;NOTA_FISCAL;SERIE;FORNECEDOR;DTA_EMISSAO;DTA_AQUISICAO;DTA_INCORP;
      * TIPO_MOVIMENTO;CONTA;DESCRICAO_CONTA;SEQBEM;NROBEM;LOCALIZACAO;NROPLAQUETA;
      * SEQPRODUTO;DESCRICAO;DESC_BEM;MODELO;SERIE;QTDE;NROITEM;CUSTO_AQUISICAO;
      * CUSTO_CORRIGIDO;PERCCONTAB;DPR_ACUMULADA;VLR_CONTAB_LIQ
      *
+     * Layout novo:
+     * LOJA;SEQBEM;CODGRUPO;CODLOCALIZACAO;NROBEM;NROINCORP;DESCRESUMIDA;
+     * DESCDETALHADA;QTDBEM;NROPLAQUETA;NROSERIEBEM;MODELOBEM
+     *
      * Mapeamento para ItemPlanilha:
-     *  - loja          ← EMPRESA        (normaliza zeros à esquerda)
-     *  - codgrupo      ← CONTA
+     *  - loja          ← EMPRESA / LOJA      (normaliza zeros à esquerda)
+     *  - codgrupo      ← CONTA / CODGRUPO
      *  - sqbem         ← SEQBEM
      *  - nrobem        ← NROBEM
-     *  - codlocalizacao← LOCALIZACAO    (setor)
-     *  - nroplaqueta   ← NROPLAQUETA    (normaliza zeros à esquerda)
-     *  - descresumida  ← DESCRICAO
-     *  - descdetalhada ← DESC_BEM
-     *  - modelobem     ← MODELO
-     *  - nroseriebem   ← SERIE
-     *  - qtdbem        ← QTDE
+     *  - codlocalizacao← LOCALIZACAO / CODLOCALIZACAO
+     *  - nroplaqueta   ← NROPLAQUETA        (normaliza zeros à esquerda)
+     *  - descresumida  ← DESCRICAO / DESCRESUMIDA
+     *  - descdetalhada ← DESC_BEM / DESCDETALHADA
+     *  - modelobem     ← MODELO / MODELOBEM
+     *  - nroseriebem   ← SERIE / NROSERIEBEM
+     *  - qtdbem        ← QTDE / QTDBEM
+     *  - nroincorp     ← NROINCORP (se existir)
      */
     public static List<ItemPlanilha> importar(Context context, Uri fileUri) {
         List<ItemPlanilha> lista = new ArrayList<>();
@@ -54,21 +60,22 @@ public class ImportadorPlanilha {
             char sep = detectSeparator(header);
             List<String> headerCols = splitCsv(header, sep);
 
-            // --- Índices baseados no cabeçalho REAL da planilha ---
-            int idxEmpresa     = indexOfIgnoreCase(headerCols, "EMPRESA");
-            int idxConta       = indexOfIgnoreCase(headerCols, "CONTA");
-            int idxSeqBem      = indexOfIgnoreCase(headerCols, "SEQBEM");
-            int idxNroBem      = indexOfIgnoreCase(headerCols, "NROBEM");
-            int idxLocalizacao = indexOfIgnoreCase(headerCols, "LOCALIZACAO");
-            int idxNroPlaqueta = indexOfIgnoreCase(headerCols, "NROPLAQUETA");
-            int idxDescricao   = indexOfIgnoreCase(headerCols, "DESCRICAO");
-            int idxDescBem     = indexOfIgnoreCase(headerCols, "DESC_BEM");
-            int idxModelo      = indexOfIgnoreCase(headerCols, "MODELO");
-            int idxSerieBem    = indexOfIgnoreCase(headerCols, "SERIE");
-            int idxQtde        = indexOfIgnoreCase(headerCols, "QTDE");
+            // --- Índices baseados no cabeçalho REAL da planilha (antigo OU novo) ---
+            int idxEmpresa     = indexOfAnyIgnoreCase(headerCols, "EMPRESA", "LOJA");
+            int idxConta       = indexOfAnyIgnoreCase(headerCols, "CONTA", "CODGRUPO");
+            int idxSeqBem      = indexOfAnyIgnoreCase(headerCols, "SEQBEM");
+            int idxNroBem      = indexOfAnyIgnoreCase(headerCols, "NROBEM");
+            int idxLocalizacao = indexOfAnyIgnoreCase(headerCols, "LOCALIZACAO", "CODLOCALIZACAO");
+            int idxNroPlaqueta = indexOfAnyIgnoreCase(headerCols, "NROPLAQUETA");
+            int idxDescricao   = indexOfAnyIgnoreCase(headerCols, "DESCRICAO", "DESCRESUMIDA");
+            int idxDescBem     = indexOfAnyIgnoreCase(headerCols, "DESC_BEM", "DESCDETALHADA");
+            int idxModelo      = indexOfAnyIgnoreCase(headerCols, "MODELO", "MODELOBEM");
+            int idxSerieBem    = indexOfAnyIgnoreCase(headerCols, "SERIE", "NROSERIEBEM");
+            int idxQtde        = indexOfAnyIgnoreCase(headerCols, "QTDE", "QTDBEM");
+            int idxNroIncorp   = indexOfAnyIgnoreCase(headerCols, "NROINCORP");
 
             // Fallback para posição fixa se algum não for encontrado
-            // (com base na ordem que você mandou)
+            // (com base no layout antigo)
             if (idxEmpresa     < 0) idxEmpresa     = 0;
             if (idxConta       < 0) idxConta       = 8;
             if (idxSeqBem      < 0) idxSeqBem      = 10;
@@ -80,14 +87,12 @@ public class ImportadorPlanilha {
             if (idxModelo      < 0) idxModelo      = 17;
             if (idxSerieBem    < 0) idxSerieBem    = 18;
             if (idxQtde        < 0) idxQtde        = 19;
+            // idxNroIncorp: no layout antigo não existe, então -1 mesmo é ok
 
             // Aqui vem a mágica: juntar linhas quebradas
             String current = null;
             String line;
             while ((line = reader.readLine()) != null) {
-                if (line == null) break;
-
-                // remove NBSP e espaços extras de borda
                 String trimmed = safe(line);
                 if (trimmed.isEmpty()) {
                     continue;
@@ -100,8 +105,7 @@ public class ImportadorPlanilha {
                 }
 
                 if (isInicioDeRegistro(trimmed)) {
-                    // A linha atual parece o início de uma nova loja (ex.: "001 CARPINA", "500-MATRIZ")
-                    // então fechamos o registro anterior e começamos um novo
+                    // Parece início de um novo registro: finaliza o anterior
                     adicionarItem(
                             lista,
                             current,
@@ -111,7 +115,7 @@ public class ImportadorPlanilha {
                             idxConta,
                             idxLocalizacao,
                             idxNroBem,
-                            /* idxNroIncorp (não temos coluna específica, deixa -1 no uso) */ -1,
+                            idxNroIncorp,
                             idxDescricao,
                             idxDescBem,
                             idxQtde,
@@ -122,8 +126,7 @@ public class ImportadorPlanilha {
 
                     current = trimmed;
                 } else {
-                    // NÃO é início de registro → é continuação de texto
-                    // Exemplo clássico: "DESCRIÇÃO DO I" + "\n" + "TEM"
+                    // Continuação de texto (descrição quebrada em várias linhas)
                     current = current + " " + trimmed;
                 }
             }
@@ -139,7 +142,7 @@ public class ImportadorPlanilha {
                         idxConta,
                         idxLocalizacao,
                         idxNroBem,
-                        -1,
+                        idxNroIncorp,
                         idxDescricao,
                         idxDescBem,
                         idxQtde,
@@ -168,13 +171,7 @@ public class ImportadorPlanilha {
     /**
      * Detecta se a linha parece ser o INÍCIO de um novo registro da planilha.
      *
-     * Aqui usamos o padrão da sua planilha:
-     *   "001 CARPINA"
-     *   "001-CARPINA"
-     *   "500-MATRIZ"
-     *   "999-CD SECOS"
-     *
-     * Ou seja: começa com 3 dígitos.
+     * Padrão: começa com 3 dígitos (ex.: "001 CARPINA", "500-MATRIZ", "001;...").
      */
     private static boolean isInicioDeRegistro(String line) {
         if (line == null) return false;
@@ -192,18 +189,18 @@ public class ImportadorPlanilha {
             List<ItemPlanilha> lista,
             String rawLine,
             char sep,
-            int idxEmpresa,      // EMPRESA -> loja
+            int idxEmpresa,      // EMPRESA / LOJA -> loja
             int idxSeqBem,       // SEQBEM
-            int idxConta,        // CONTA -> codgrupo
-            int idxLocalizacao,  // LOCALIZACAO -> codlocalizacao (setor)
+            int idxConta,        // CONTA / CODGRUPO -> codgrupo
+            int idxLocalizacao,  // LOCALIZACAO / CODLOCALIZACAO -> codlocalizacao
             int idxNroBem,       // NROBEM
-            int idxNroIncorp,    // (não temos, normalmente -1)
-            int idxDescricao,    // DESCRICAO -> descresumida
-            int idxDescBem,      // DESC_BEM -> descdetalhada
-            int idxQtde,         // QTDE -> qtdbem
+            int idxNroIncorp,    // NROINCORP (se existir)
+            int idxDescricao,    // DESCRICAO / DESCRESUMIDA -> descresumida
+            int idxDescBem,      // DESC_BEM / DESCDETALHADA -> descdetalhada
+            int idxQtde,         // QTDE / QTDBEM -> qtdbem
             int idxNroPlaqueta,  // NROPLAQUETA -> nroplaqueta
-            int idxSerieBem,     // SERIE -> nroseriebem
-            int idxModelo        // MODELO -> modelobem
+            int idxSerieBem,     // SERIE / NROSERIEBEM -> nroseriebem
+            int idxModelo        // MODELO / MODELOBEM -> modelobem
     ) {
         if (rawLine == null) return;
         String line = rawLine.trim();
@@ -276,6 +273,16 @@ public class ImportadorPlanilha {
             if (c != null && c.trim().equalsIgnoreCase(name)) {
                 return i;
             }
+        }
+        return -1;
+    }
+
+    /** Procura por qualquer um dos nomes possíveis (para suportar layouts diferentes). */
+    private static int indexOfAnyIgnoreCase(List<String> cols, String... names) {
+        if (cols == null || names == null) return -1;
+        for (String n : names) {
+            int idx = indexOfIgnoreCase(cols, n);
+            if (idx >= 0) return idx;
         }
         return -1;
     }

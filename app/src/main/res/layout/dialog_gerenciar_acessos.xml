@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@drawable/bg_dialog_rounded">
+
+    <ImageView
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@drawable/ic_upload_file"
+        android:background="@drawable/bg_input_futurista"
+        android:backgroundTint="#E3F2FD"
+        android:padding="10dp"
+        android:layout_marginBottom="16dp"
+        android:layout_gravity="center_horizontal"
+        android:tint="@color/novo_atacarejo_blue" />
+
+    <TextView
+        android:id="@+id/tvAccessTitle"
+        style="@style/TituloFuturista"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Gerenciar acessos"
+        android:gravity="center"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/tvAccessSubtitle"
+        style="@style/TituloFuturista"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Escolha o que deseja fazer"
+        android:gravity="center"
+        android:layout_marginTop="4dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="24dp">
+
+        <Button
+            android:id="@+id/btnVerUsuarios"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:text="Ver usuários"
+            android:textColor="@color/text_secondary" />
+
+        <Button
+            android:id="@+id/btnNovoUsuario"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:text="Cadastrar novo"
+            android:layout_marginStart="8dp" />
+    </LinearLayout>
+
+</LinearLayout>

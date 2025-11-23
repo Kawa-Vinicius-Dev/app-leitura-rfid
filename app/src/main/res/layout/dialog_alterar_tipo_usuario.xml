@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@drawable/bg_dialog_rounded">
+
+    <ImageView
+        android:id="@+id/imgIconTipo"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@drawable/ic_people"
+        android:background="@drawable/bg_input_futurista"
+        android:backgroundTint="#E3F2FD"
+        android:padding="10dp"
+        android:layout_marginBottom="16dp"
+        android:layout_gravity="center_horizontal"
+        android:tint="@color/novo_atacarejo_blue" />
+
+    <TextView
+        android:id="@+id/tvTipoTitle"
+        style="@style/TituloFuturista"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Alterar tipo de usuário"
+        android:gravity="center"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/tvTipoSubtitle"
+        style="@style/TituloFuturista"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Selecione o novo tipo de acesso"
+        android:gravity="center"
+        android:layout_marginTop="4dp" />
+
+    <TextView
+        android:id="@+id/tvNomeUsuarioDialog"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Usuário: -"
+        android:textSize="14sp"
+        android:textColor="@color/text_secondary"
+        android:gravity="center"
+        android:layout_marginTop="8dp" />
+
+    <RadioGroup
+        android:id="@+id/rgTipoUsuario"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginTop="16dp">
+
+        <RadioButton
+            android:id="@+id/rbMembro"
+            style="@style/TituloFuturista"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Membro"
+            android:textSize="15sp"
+            android:padding="8dp" />
+
+        <RadioButton
+            android:id="@+id/rbAdm"
+            style="@style/TituloFuturista"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Administrador"
+            android:textSize="15sp"
+            android:padding="8dp" />
+    </RadioGroup>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="24dp">
+
+        <Button
+            android:id="@+id/btnCancelarTipo"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:text="Cancelar"
+            android:textColor="@color/text_secondary" />
+
+        <Button
+            android:id="@+id/btnSalvarTipo"
+            style="@style/BotaoFuturista"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:text="Salvar"
+            android:layout_marginStart="8dp" />
+    </LinearLayout>
+
+</LinearLayout>

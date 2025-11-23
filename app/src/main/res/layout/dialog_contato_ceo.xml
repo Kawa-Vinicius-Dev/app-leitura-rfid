@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@drawable/bg_dialog_rounded">
+
+    <ImageView
+        android:id="@+id/imgIconContatoCEO"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:src="@drawable/ic_people"
+        android:background="@drawable/bg_input_futurista"
+        android:backgroundTint="#E3F2FD"
+        android:padding="10dp"
+        android:layout_marginBottom="16dp"
+        android:layout_gravity="center_horizontal"
+        android:tint="@color/novo_atacarejo_blue" />
+
+    <TextView
+        android:id="@+id/tvContatoTitle"
+        style="@style/TituloFuturista"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Criação de conta"
+        android:gravity="center"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/tvContatoMsg"
+        style="@style/TituloFuturista"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Mensagem aqui"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:layout_marginTop="8dp" />
+
+    <Button
+        android:id="@+id/btnContatoOk"
+        style="@style/BotaoFuturista"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="Entendi"
+        android:layout_marginTop="24dp" />
+
+</LinearLayout>

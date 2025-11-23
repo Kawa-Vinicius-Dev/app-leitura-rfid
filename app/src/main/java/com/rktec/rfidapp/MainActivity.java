@@ -79,10 +79,20 @@ public class MainActivity extends AppCompatActivity {
 
         UsuarioDAO dao = new UsuarioDAO(this);
         String permissao = dao.getPermissaoUsuario(nome);
-        if ("adm".equals(permissao)) {
+        if (permissao == null) permissao = "";
+
+// CEO: pode cadastrar e gerenciar
+        if ("CEO".equalsIgnoreCase(permissao)) {
+            btnGerenciarUsuarios.setVisibility(View.VISIBLE);
+            btnGerenciarUsuarios.setOnClickListener(v -> mostrarDialogGerenciarAcessos());
+
+// ADM: só gerencia (não cadastra)
+        } else if ("ADM".equalsIgnoreCase(permissao)) {
             btnGerenciarUsuarios.setVisibility(View.VISIBLE);
             btnGerenciarUsuarios.setOnClickListener(v ->
-                    startActivity(new Intent(this, GerenciarUsuariosActivity.class)));
+                    startActivity(new Intent(MainActivity.this, GerenciarUsuariosActivity.class)));
+
+// Membro comum: não vê nada
         } else {
             btnGerenciarUsuarios.setVisibility(View.GONE);
         }
@@ -186,6 +196,32 @@ public class MainActivity extends AppCompatActivity {
                     }).start();
                 }
         );
+    }
+
+    private void mostrarDialogGerenciarAcessos() {
+        View view = getLayoutInflater().inflate(R.layout.dialog_gerenciar_acessos, null);
+
+        Button btnVerUsuarios  = view.findViewById(R.id.btnVerUsuarios);
+        Button btnNovoUsuario  = view.findViewById(R.id.btnNovoUsuario);
+
+        AlertDialog dialog = new AlertDialog.Builder(this, R.style.AppDialogTheme)
+                .setView(view)
+                .setCancelable(true)
+                .create();
+
+        btnVerUsuarios.setOnClickListener(v -> {
+            startActivity(new Intent(MainActivity.this, GerenciarUsuariosActivity.class));
+            dialog.dismiss();
+        });
+
+        btnNovoUsuario.setOnClickListener(v -> {
+            Intent it = new Intent(MainActivity.this, CadastroActivity.class);
+            it.putExtra("primeiroAcesso", false); // cadastro feito de dentro do sistema
+            startActivity(it);
+            dialog.dismiss();
+        });
+
+        dialog.show();
     }
 
     private void mostrarLoading(String mensagem) {
