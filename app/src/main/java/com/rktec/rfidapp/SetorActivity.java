@@ -3,11 +3,12 @@ package com.rktec.rfidapp;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
-import android.widget.EditText;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -24,59 +25,73 @@ public class SetorActivity extends AppCompatActivity {
 
         ImageButton btnBack = findViewById(R.id.btnBack);
         btnBack.setOnClickListener(v -> {
-            // Volta pra tela de lojas
             startActivity(new Intent(this, LojaActivity.class));
             finish();
         });
 
         DadosGlobais dados = DadosGlobais.getInstance();
 
-        // Loja que o usuário escolheu na tela anterior (ex.: "001-CARPINA")
+        // Loja escolhida na tela anterior (ex.: "001-CARPINA")
         String lojaSelecionada = dados.getLojaSelecionada();
 
         // Todos os setores importados do TXT
         List<SetorLocalizacao> todosSetores = dados.getListaSetores();
 
-        // Agora filtramos só os setores da loja escolhida
-        List<SetorLocalizacao> setoresFiltrados = filtrarPorLoja(todosSetores, lojaSelecionada);
+        // Normaliza loja para o código numérico (ex.: "001-CARPINA" -> "1")
+        String codigoLoja = extrairCodigoLoja(lojaSelecionada);
 
-        // Lista base com todos os nomes (originais)
-        List<String> nomesOriginais = new ArrayList<>();
-        for (SetorLocalizacao s : setoresFiltrados) {
-            nomesOriginais.add(s.setor);
+        if (codigoLoja == null || codigoLoja.isEmpty()) {
+            Toast.makeText(this, "Loja inválida. Selecione novamente.", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, LojaActivity.class));
+            finish();
+            return;
         }
 
-        // Lista que é de fato mostrada na tela (filtrada)
-        List<String> nomesFiltrados = new ArrayList<>(nomesOriginais);
+        // Lista base: nomes únicos de setores APENAS da loja
+        final List<String> nomesOriginais =
+                ImportadorSetor.setoresUnicosPorLoja(todosSetores, codigoLoja);
+
+        if (nomesOriginais == null || nomesOriginais.isEmpty()) {
+            Toast.makeText(this, "Nenhum setor encontrado para esta loja.", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, LojaActivity.class));
+            finish();
+            return;
+        }
+
+        // Lista auxiliar em minúsculas (mesma ordem)
+        final List<String> nomesOriginaisLower = new ArrayList<>(nomesOriginais.size());
+        for (String nome : nomesOriginais) {
+            nomesOriginaisLower.add(nome.toLowerCase(Locale.ROOT));
+        }
+
+        // Lista que aparece na tela (filtrada)
+        final List<String> nomesFiltrados = new ArrayList<>(nomesOriginais);
 
         ListView lv = findViewById(R.id.listViewSetores);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+        final ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 this,
                 android.R.layout.simple_list_item_1,
                 nomesFiltrados
         );
         lv.setAdapter(adapter);
 
-        // Barra de busca
+        // Busca
         EditText edtBusca = findViewById(R.id.editSearchSetor);
         edtBusca.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 String filtro = s.toString().toLowerCase(Locale.ROOT).trim();
-
                 nomesFiltrados.clear();
 
                 if (filtro.isEmpty()) {
-                    // Sem texto: mostra todos os setores da loja
                     nomesFiltrados.addAll(nomesOriginais);
                 } else {
-                    // Contém em qualquer parte do nome do setor
-                    for (String nome : nomesOriginais) {
-                        if (nome.toLowerCase(Locale.ROOT).contains(filtro)) {
-                            nomesFiltrados.add(nome);
+                    final int size = nomesOriginais.size();
+                    for (int i = 0; i < size; i++) {
+                        if (nomesOriginaisLower.get(i).contains(filtro)) {
+                            nomesFiltrados.add(nomesOriginais.get(i));
                         }
                     }
                 }
@@ -84,19 +99,22 @@ public class SetorActivity extends AppCompatActivity {
                 adapter.notifyDataSetChanged();
             }
 
-            @Override
-            public void afterTextChanged(Editable s) {}
+            @Override public void afterTextChanged(Editable s) {}
         });
 
-        // Ao clicar, pega o nome filtrado e localiza o objeto SetorLocalizacao correspondente
+        // Clique no setor
         lv.setOnItemClickListener((p, v, pos, id) -> {
             String nomeEscolhido = nomesFiltrados.get(pos);
 
+            // Acha um SetorLocalizacao correspondente APENAS dessa loja (primeira ocorrência)
             SetorLocalizacao escolhido = null;
-            for (SetorLocalizacao s : setoresFiltrados) {
-                if (s.setor.equals(nomeEscolhido)) {
-                    escolhido = s;
-                    break;
+            if (todosSetores != null) {
+                for (SetorLocalizacao s : todosSetores) {
+                    if (s == null) continue;
+                    if (codigoLoja.equals(s.loja) && nomeEscolhido.equals(s.setor)) {
+                        escolhido = s;
+                        break;
+                    }
                 }
             }
 
@@ -104,38 +122,10 @@ public class SetorActivity extends AppCompatActivity {
                 dados.setSetorSelecionado(escolhido);
                 startActivity(new Intent(this, LeituraActivity.class));
                 finish();
+            } else {
+                Toast.makeText(this, "Setor inválido. Selecione novamente.", Toast.LENGTH_SHORT).show();
             }
         });
-    }
-
-    /**
-     * Filtra a lista de setores pela loja.
-     * Se der algum problema em descobrir a loja, volta a lista inteira (pra não quebrar).
-     */
-    private List<SetorLocalizacao> filtrarPorLoja(List<SetorLocalizacao> todos, String lojaSelecionada) {
-        List<SetorLocalizacao> resultado = new ArrayList<>();
-        if (todos == null || todos.isEmpty()) return resultado;
-
-        String codigoLoja = extrairCodigoLoja(lojaSelecionada); // ex.: "001-CARPINA" -> "1"
-        if (codigoLoja == null || codigoLoja.isEmpty()) {
-            // Não achou código de loja, devolve tudo mesmo
-            resultado.addAll(todos);
-            return resultado;
-        }
-
-        for (SetorLocalizacao s : todos) {
-            if (s == null) continue;
-            if (codigoLoja.equals(s.loja)) {
-                resultado.add(s);
-            }
-        }
-
-        // Se por algum motivo não achou nada, devolve tudo pra não ficar tela vazia
-        if (resultado.isEmpty()) {
-            resultado.addAll(todos);
-        }
-
-        return resultado;
     }
 
     /**
@@ -145,6 +135,7 @@ public class SetorActivity extends AppCompatActivity {
      *  "001-CARPINA"   -> "1"
      *  "002-VIT.SA"    -> "2"
      *  "500-MATRIZ"    -> "500"
+     *  "1"             -> "1"
      */
     private String extrairCodigoLoja(String lojaSelecionada) {
         if (lojaSelecionada == null) return null;
@@ -155,15 +146,22 @@ public class SetorActivity extends AppCompatActivity {
         int idx = s.indexOf('-');
         String numero = (idx > 0) ? s.substring(0, idx).trim() : s;
 
-        // mantém só dígitos
-        numero = numero.replaceAll("\\D+", "");
         if (numero.isEmpty()) return null;
 
-        // remove zeros à esquerda ("001" -> "1")
-        if (numero.matches("^\\d+$")) {
-            numero = numero.replaceFirst("^0+(?!$)", "");
+        // mantém só dígitos
+        StringBuilder digits = new StringBuilder(numero.length());
+        for (int i = 0; i < numero.length(); i++) {
+            char ch = numero.charAt(i);
+            if (ch >= '0' && ch <= '9') digits.append(ch);
         }
 
-        return numero;
+        if (digits.length() == 0) return null;
+
+        // remove zeros à esquerda ("001" -> "1")
+        int start = 0;
+        int len = digits.length();
+        while (start < len - 1 && digits.charAt(start) == '0') start++;
+
+        return digits.substring(start);
     }
 }

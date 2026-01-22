@@ -12,7 +12,7 @@ public class SetorLocalizacao {
     public String codlocalizacao;
     public String setor;
 
-    // Construtor antigo (compatibilidade, se em algum lugar só usarem código/nome)
+    // Construtor antigo (compatibilidade)
     public SetorLocalizacao(String codlocalizacao, String setor) {
         this(null, codlocalizacao, setor);
     }

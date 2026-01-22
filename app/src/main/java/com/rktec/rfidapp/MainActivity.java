@@ -2,17 +2,16 @@ package com.rktec.rfidapp;
 
 import android.app.AlertDialog;
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.cardview.widget.CardView;
-import android.widget.ImageView;
+
 import android.graphics.Color;
-import androidx.cardview.widget.CardView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -35,12 +34,10 @@ public class MainActivity extends AppCompatActivity {
 
     private AlertDialog loadingDialog;
 
-    // DEPOIS
     private CardView btnImportarPlanilha, btnImportarSetor, btnGerenciarUsuarios;
     private Button btnLogout;
     private ImageButton btnLimparPlanilha, btnLimparSetor;
 
-    // NOVOS TextViews para mudar o texto dos cards
     private TextView tvStatusPlanilha, tvStatusSetor;
 
     private ImageView imgIconPlanilha, imgIconSetor;
@@ -67,13 +64,11 @@ public class MainActivity extends AppCompatActivity {
         btnLimparPlanilha     = findViewById(R.id.btnLimparPlanilha);
         btnLimparSetor        = findViewById(R.id.btnLimparSetor);
 
-// novos:
         tvStatusPlanilha = findViewById(R.id.tvStatusPlanilha);
         tvStatusSetor    = findViewById(R.id.tvStatusSetor);
 
-        imgIconPlanilha       = findViewById(R.id.imgIconPlanilha);
-        imgIconSetor          = findViewById(R.id.imgIconSetor);
-
+        imgIconPlanilha  = findViewById(R.id.imgIconPlanilha);
+        imgIconSetor     = findViewById(R.id.imgIconSetor);
 
         btnLogout.setOnClickListener(this::onLogout);
 
@@ -81,79 +76,99 @@ public class MainActivity extends AppCompatActivity {
         String permissao = dao.getPermissaoUsuario(nome);
         if (permissao == null) permissao = "";
 
-// CEO: pode cadastrar e gerenciar
         if ("CEO".equalsIgnoreCase(permissao)) {
             btnGerenciarUsuarios.setVisibility(View.VISIBLE);
             btnGerenciarUsuarios.setOnClickListener(v -> mostrarDialogGerenciarAcessos());
-
-// ADM: só gerencia (não cadastra)
         } else if ("ADM".equalsIgnoreCase(permissao)) {
             btnGerenciarUsuarios.setVisibility(View.VISIBLE);
             btnGerenciarUsuarios.setOnClickListener(v ->
                     startActivity(new Intent(MainActivity.this, GerenciarUsuariosActivity.class)));
-
-// Membro comum: não vê nada
         } else {
             btnGerenciarUsuarios.setVisibility(View.GONE);
         }
 
-        // Lixeiras
         btnLimparPlanilha.setOnClickListener(v -> mostrarDialogoDeLimpeza("planilha"));
         btnLimparSetor.setOnClickListener(v -> mostrarDialogoDeLimpeza("setores"));
 
-        // Importar PLANILHA principal
-        // Importar PLANILHA principal
-        // Importar PLANILHA principal
+        // ===================== IMPORTAR PLANILHA =====================
         importarPlanilhaLauncher = registerForActivityResult(
                 new ActivityResultContracts.GetContent(),
                 uri -> {
                     if (uri == null) return;
 
-                    // 🔹 Feedback imediato: volta pro app e mostra loading
                     mostrarLoading("Importando planilha, aguarde...");
 
                     new Thread(() -> {
-                        // roda FORA da UI thread
-                        List<ItemPlanilha> importada = ImportadorPlanilha.importar(MainActivity.this, uri);
+                        long inicioTotal = System.currentTimeMillis();
+
+                        List<ItemPlanilha> importada =
+                                ImportadorPlanilha.importar(MainActivity.this, uri);
+
+                        if (importada != null && !importada.isEmpty()
+                                && listaSetores != null && !listaSetores.isEmpty()) {
+
+                            long inicioMap = System.currentTimeMillis();
+
+                            // >>> ALTERADO AQUI <<<
+                            Map<String, String> mapa = ImportadorSetor.toMapLojaCodigo(listaSetores);
+
+                            MapeadorSetor.aplicar(importada, mapa);
+
+                            long fimMap = System.currentTimeMillis();
+                            android.util.Log.d("MainActivity",
+                                    "Mapeamento após importar planilha levou "
+                                            + (fimMap - inicioMap) + " ms");
+                        }
+
+                        long fimTotal = System.currentTimeMillis();
+                        long duracaoTotal = fimTotal - inicioTotal;
+
+                        List<ItemPlanilha> resultado = importada;
 
                         runOnUiThread(() -> {
-                            // volta pra UI
-                            esconderLoading();
-
-                            listaPlanilha = (importada != null) ? importada : new ArrayList<>();
+                            listaPlanilha = (resultado != null)
+                                    ? resultado
+                                    : new ArrayList<>();
                             DadosGlobais.getInstance().setListaPlanilha(listaPlanilha);
 
                             if (listaPlanilha == null || listaPlanilha.isEmpty()) {
-                                Toast.makeText(MainActivity.this, "Erro: Nenhum item importado! Verifique a planilha.", Toast.LENGTH_LONG).show();
+                                Toast.makeText(MainActivity.this,
+                                        "Erro: Nenhum item importado! Verifique a planilha.",
+                                        Toast.LENGTH_LONG).show();
                                 resetarEstadoBotaoPlanilha();
-                            } else {
-                                // Se já temos setores, aplica o mapeamento agora
-                                if (listaSetores != null && !listaSetores.isEmpty()) {
-                                    Map<String, String> mapa = ImportadorSetor.toMap(listaSetores);
-                                    MapeadorSetor.aplicar(listaPlanilha, mapa);
-                                }
-
-                                // 🔹 Feedback visual amigável
-                                tvStatusPlanilha.setText("Planilha carregada (" + listaPlanilha.size() + " itens)");
-
-                                // Card “travado” em cinza suave (não mais verdão)
-                                btnImportarPlanilha.setEnabled(false);
-                                btnImportarPlanilha.setCardBackgroundColor(Color.parseColor("#F5F5F5"));
-
-                                // Ícone de check verde
-                                imgIconPlanilha.setImageResource(R.drawable.ic_check);
-                                imgIconPlanilha.setColorFilter(
-                                        ContextCompat.getColor(MainActivity.this, R.color.success_green)
-                                );
-
-                                btnLimparPlanilha.setVisibility(View.VISIBLE);
-                                Toast.makeText(MainActivity.this, "Importados " + listaPlanilha.size() + " itens!", Toast.LENGTH_SHORT).show();
+                                esconderLoading();
+                                return;
                             }
+
+                            tvStatusPlanilha.setText("Planilha carregada (" +
+                                    listaPlanilha.size() + " itens)");
+
+                            btnImportarPlanilha.setEnabled(false);
+                            btnImportarPlanilha.setCardBackgroundColor(
+                                    Color.parseColor("#F5F5F5"));
+
+                            imgIconPlanilha.setImageResource(R.drawable.ic_check);
+                            imgIconPlanilha.setColorFilter(
+                                    ContextCompat.getColor(
+                                            MainActivity.this,
+                                            R.color.success_green
+                                    )
+                            );
+
+                            btnLimparPlanilha.setVisibility(View.VISIBLE);
+
+                            Toast.makeText(MainActivity.this,
+                                    "Importados " + listaPlanilha.size()
+                                            + " itens! (total " + duracaoTotal + " ms)",
+                                    Toast.LENGTH_SHORT).show();
+
+                            esconderLoading();
                         });
                     }).start();
                 }
         );
 
+        // ===================== IMPORTAR SETORES =====================
         importarSetorLauncher = registerForActivityResult(
                 new ActivityResultContracts.GetContent(),
                 uri -> {
@@ -162,36 +177,70 @@ public class MainActivity extends AppCompatActivity {
                     mostrarLoading("Importando setores, aguarde...");
 
                     new Thread(() -> {
-                        List<SetorLocalizacao> importados = ImportadorSetor.importar(MainActivity.this, uri);
+                        long inicioTotal = System.currentTimeMillis();
+
+                        List<SetorLocalizacao> importados =
+                                ImportadorSetor.importar(MainActivity.this, uri);
+
+                        if (importados != null && !importados.isEmpty()
+                                && listaPlanilha != null && !listaPlanilha.isEmpty()) {
+
+                            long inicioMap = System.currentTimeMillis();
+
+                            // >>> ALTERADO AQUI <<<
+                            Map<String, String> mapa = ImportadorSetor.toMapLojaCodigo(importados);
+
+                            MapeadorSetor.aplicar(listaPlanilha, mapa);
+
+                            long fimMap = System.currentTimeMillis();
+                            android.util.Log.d("MainActivity",
+                                    "Mapeamento após importar setores levou "
+                                            + (fimMap - inicioMap) + " ms");
+                        }
+
+                        long fimTotal = System.currentTimeMillis();
+                        long duracaoTotal = fimTotal - inicioTotal;
+
+                        List<SetorLocalizacao> resultado = importados;
 
                         runOnUiThread(() -> {
-                            esconderLoading();
-
-                            listaSetores = (importados != null) ? importados : new ArrayList<>();
+                            listaSetores = (resultado != null)
+                                    ? resultado
+                                    : new ArrayList<>();
                             DadosGlobais.getInstance().setListaSetores(listaSetores);
 
                             if (listaSetores == null || listaSetores.isEmpty()) {
-                                Toast.makeText(MainActivity.this, "Erro: Nenhum setor importado!", Toast.LENGTH_LONG).show();
+                                Toast.makeText(MainActivity.this,
+                                        "Erro: Nenhum setor importado!",
+                                        Toast.LENGTH_LONG).show();
                                 resetarEstadoBotaoSetor();
-                            } else {
-                                if (listaPlanilha != null && !listaPlanilha.isEmpty()) {
-                                    Map<String, String> mapa = ImportadorSetor.toMap(listaSetores);
-                                    MapeadorSetor.aplicar(listaPlanilha, mapa);
-                                }
-
-                                tvStatusSetor.setText("Setores carregados (" + listaSetores.size() + ")");
-
-                                btnImportarSetor.setEnabled(false);
-                                btnImportarSetor.setCardBackgroundColor(Color.parseColor("#F5F5F5"));
-
-                                imgIconSetor.setImageResource(R.drawable.ic_check);
-                                imgIconSetor.setColorFilter(
-                                        ContextCompat.getColor(MainActivity.this, R.color.success_green)
-                                );
-
-                                btnLimparSetor.setVisibility(View.VISIBLE);
-                                Toast.makeText(MainActivity.this, "Importados " + listaSetores.size() + " setores!", Toast.LENGTH_SHORT).show();
+                                esconderLoading();
+                                return;
                             }
+
+                            tvStatusSetor.setText("Setores carregados (" +
+                                    listaSetores.size() + ")");
+
+                            btnImportarSetor.setEnabled(false);
+                            btnImportarSetor.setCardBackgroundColor(
+                                    Color.parseColor("#F5F5F5"));
+
+                            imgIconSetor.setImageResource(R.drawable.ic_check);
+                            imgIconSetor.setColorFilter(
+                                    ContextCompat.getColor(
+                                            MainActivity.this,
+                                            R.color.success_green
+                                    )
+                            );
+
+                            btnLimparSetor.setVisibility(View.VISIBLE);
+
+                            Toast.makeText(MainActivity.this,
+                                    "Importados " + listaSetores.size()
+                                            + " setores! (total " + duracaoTotal + " ms)",
+                                    Toast.LENGTH_SHORT).show();
+
+                            esconderLoading();
                         });
                     }).start();
                 }
@@ -216,7 +265,7 @@ public class MainActivity extends AppCompatActivity {
 
         btnNovoUsuario.setOnClickListener(v -> {
             Intent it = new Intent(MainActivity.this, CadastroActivity.class);
-            it.putExtra("primeiroAcesso", false); // cadastro feito de dentro do sistema
+            it.putExtra("primeiroAcesso", false);
             startActivity(it);
             dialog.dismiss();
         });
@@ -277,15 +326,12 @@ public class MainActivity extends AppCompatActivity {
                 resetarEstadoBotaoPlanilha();
             } else {
                 resetarEstadoBotaoSetor();
-                // (Opcional) Se quiser também "desmapear" nomes de setor já aplicados na listaPlanilha, faça aqui.
-                // Ex.: for (ItemPlanilha item : listaPlanilha) { item.setNomeSetor(null); }
             }
             dialog.dismiss();
         });
 
         dialog.show();
     }
-
 
     private void resetarEstadoBotaoPlanilha() {
         listaPlanilha.clear();
@@ -324,12 +370,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onImportarPlanilha(View v) { importarPlanilhaLauncher.launch("text/*"); }
+
     public void onImportarSetor(View v) { importarSetorLauncher.launch("text/*"); }
 
     public void onEscolherLoja(View v) {
         if (listaPlanilha == null || listaPlanilha.isEmpty() ||
                 listaSetores == null || listaSetores.isEmpty()) {
-            Toast.makeText(this, "Importe a planilha e os setores primeiro!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this,
+                    "Importe a planilha e os setores primeiro!",
+                    Toast.LENGTH_SHORT).show();
             return;
         }
         startActivity(new Intent(this, LojaActivity.class));

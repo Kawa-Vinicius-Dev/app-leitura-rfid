@@ -47,10 +47,8 @@ public class ItemLeituraSessaoAdapter extends RecyclerView.Adapter<ItemLeituraSe
         if (!sessao.encontrado || sessao.item == null) {
             descricao = "Item não cadastrado";
         } else if (sessao.item.descresumida != null && !sessao.item.descresumida.trim().isEmpty()) {
-            // Prioriza SEMPRE a descrição resumida
             descricao = sessao.item.descresumida.trim();
         } else if (sessao.item.descdetalhada != null && !sessao.item.descdetalhada.trim().isEmpty()) {
-            // Só cai pra detalhada se a resumida estiver vazia
             descricao = sessao.item.descdetalhada.trim();
         } else {
             descricao = "Item sem descrição";
@@ -58,24 +56,31 @@ public class ItemLeituraSessaoAdapter extends RecyclerView.Adapter<ItemLeituraSe
         holder.tvDescricao.setText(descricao);
 
         // ---------------- LOJA / SETOR / EPC ----------------
-        String loja = "-";
-        String setor = "-";
-
-        if (sessao.item != null) {
-            if (sessao.item.loja != null && !sessao.item.loja.trim().isEmpty()) {
-                loja = sessao.item.loja.trim();
-            }
-            // usa a coluna CODLOCALIZACAO como "setor"
-            if (sessao.item.codlocalizacao != null && !sessao.item.codlocalizacao.trim().isEmpty()) {
-                setor = sessao.item.codlocalizacao.trim();
-            }
-        }
-
         if (sessao.encontrado && sessao.item != null) {
-            String subtexto = "Plaqueta: " + sessao.epc +
-                    " | Loja: " + loja +
-                    " | Setor: " + setor;
-            holder.tvEp.setText(subtexto);
+            String loja = (sessao.item.loja != null) ? sessao.item.loja : "-";
+            String setor = (sessao.item.codlocalizacao != null) ? sessao.item.codlocalizacao : "-";
+
+            StringBuilder info = new StringBuilder();
+            info.append("Plaqueta: ").append(sessao.epc);
+
+            info.append(" | Loja: ").append(loja);
+            info.append(" | Setor: ").append(setor);
+
+// ---- INFORMAÇÕES DE DIVERGÊNCIA ----
+            if (sessao.status == ItemLeituraSessao.STATUS_SETOR_ERRADO) {
+                if (sessao.setorAntigo != null && !sessao.setorAntigo.isEmpty()) {
+                    info.append("\nSetor atual (base): ").append(sessao.setorAntigo);
+                }
+            }
+
+            if (sessao.status == ItemLeituraSessao.STATUS_LOJA_ERRADA) {
+                if (sessao.lojaAntiga != null && !sessao.lojaAntiga.isEmpty()) {
+                    info.append("\nLoja atual (base): ").append(sessao.lojaAntiga);
+                }
+            }
+
+            holder.tvEp.setText(info.toString());
+
         } else {
             holder.tvEp.setText("EPC: " + sessao.epc);
         }
@@ -88,37 +93,31 @@ public class ItemLeituraSessaoAdapter extends RecyclerView.Adapter<ItemLeituraSe
                 sessao.status == ItemLeituraSessao.STATUS_NAO_ENCONTRADO) {
 
             iconResId = R.drawable.ic_close;
-            corIcone = ContextCompat.getColor(
-                    holder.itemView.getContext(),
-                    R.color.error_red
-            );
+            corIcone = ContextCompat.getColor(holder.itemView.getContext(), R.color.error_red);
 
         } else {
             switch (sessao.status) {
+
                 case ItemLeituraSessao.STATUS_OK:
                     iconResId = R.drawable.ic_check;
-                    corIcone = ContextCompat.getColor(
-                            holder.itemView.getContext(),
-                            R.color.success_green
-                    );
+                    corIcone = ContextCompat.getColor(holder.itemView.getContext(), R.color.success_green);
                     break;
 
                 case ItemLeituraSessao.STATUS_SETOR_ERRADO:
-                    iconResId = R.drawable.ic_check;
-                    corIcone = Color.parseColor("#FFC107"); // amarelo
+                    // mesma loja, setor errado → TRACINHO AMARELO
+                    iconResId = R.drawable.ic_dash;
+                    corIcone = Color.parseColor("#FFC107");
                     break;
 
                 case ItemLeituraSessao.STATUS_LOJA_ERRADA:
+                    // outra loja → LOJINHA AMARELA
                     iconResId = R.drawable.ic_store;
-                    corIcone = Color.parseColor("#FB8C00"); // laranja
+                    corIcone = Color.parseColor("#FFC107");
                     break;
 
                 default:
                     iconResId = R.drawable.ic_check;
-                    corIcone = ContextCompat.getColor(
-                            holder.itemView.getContext(),
-                            R.color.success_green
-                    );
+                    corIcone = ContextCompat.getColor(holder.itemView.getContext(), R.color.success_green);
                     break;
             }
         }
@@ -133,6 +132,7 @@ public class ItemLeituraSessaoAdapter extends RecyclerView.Adapter<ItemLeituraSe
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
+
         TextView tvDescricao;
         TextView tvEp;
         ImageView iconStatus;
@@ -145,11 +145,8 @@ public class ItemLeituraSessaoAdapter extends RecyclerView.Adapter<ItemLeituraSe
             iconStatus = itemView.findViewById(R.id.icon_status);
 
             itemView.setOnClickListener(v -> {
-                if (listener != null) {
-                    int pos = getAdapterPosition();
-                    if (pos != RecyclerView.NO_POSITION) {
-                        listener.onItemClick(pos);
-                    }
+                if (listener != null && getAdapterPosition() != RecyclerView.NO_POSITION) {
+                    listener.onItemClick(getAdapterPosition());
                 }
             });
         }

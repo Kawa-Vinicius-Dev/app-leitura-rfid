@@ -10,93 +10,72 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-/**
- * Importa a planilha de SETORES.
- *
- * Formato esperado do arquivo texto:
- *
- *  NROEMPRESA;SEQLOCAL;CAMINHOLOCALIZACAO
- *  1;2291;LOJA > LJ - ANTE SALA DA TESOURARIA
- *  1;1288;LOJA > LJ - ATENDIMENTO DE ATACADO
- *  ...
- *
- * Regras de tratamento:
- *  - NROEMPRESA: índice numérico da loja → remove zeros à esquerda ("001" -> "1").
- *  - SEQLOCAL: código da localização → normaliza (trim, NBSP, zeros à esquerda).
- *  - CAMINHOLOCALIZACAO:
- *      • remove "LOJA > " do início;
- *      • "MATRIZ > MATRIZ" vira apenas "MATRIZ";
- *      • para "MATRIZ > X", remove "MATRIZ > " e mantém "X".
- */
 public class ImportadorSetor {
 
-    /**
-     * Lê o arquivo de setores e retorna uma lista de SetorLocalizacao.
-     */
+    private static final String TAG = "ImportadorSetor";
+
     public static List<SetorLocalizacao> importar(Context context, Uri fileUri) {
-        List<SetorLocalizacao> lista = new ArrayList<>();
+        List<SetorLocalizacao> lista = new ArrayList<>(3000);
         if (context == null || fileUri == null) return lista;
 
-        BufferedReader reader = null;
-        try {
-            InputStream is = context.getContentResolver().openInputStream(fileUri);
-            if (is == null) return lista;
+        try (InputStream is = context.getContentResolver().openInputStream(fileUri)) {
+            if (is == null) {
+                Log.w(TAG, "InputStream nulo para URI: " + fileUri);
+                return lista;
+            }
 
-            // Charset comum para arquivo exportado de sistema legado
-            reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.ISO_8859_1));
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(is, StandardCharsets.ISO_8859_1))) {
 
-            String header = reader.readLine();
-            if (header == null) return lista;
+                String header = reader.readLine();
+                if (header == null) return lista;
 
-            char sep = detectSeparator(header);
-            List<String> headerCols = splitCsv(header, sep);
-            int idxLoja   = indexOfIgnoreCase(headerCols, "NROEMPRESA");
-            int idxCodigo = indexOfIgnoreCase(headerCols, "SEQLOCAL");
-            int idxNome   = indexOfIgnoreCase(headerCols, "CAMINHOLOCALIZACAO");
+                char sep = detectSeparator(header);
+                List<String> headerCols = splitCsv(header, sep);
+                int idxLoja   = indexOfIgnoreCase(headerCols, "NROEMPRESA");
+                int idxCodigo = indexOfIgnoreCase(headerCols, "SEQLOCAL");
+                int idxNome   = indexOfIgnoreCase(headerCols, "CAMINHOLOCALIZACAO");
 
-            // fallback se o header estiver diferente
-            if (idxLoja   < 0) idxLoja   = 0;
-            if (idxCodigo < 0) idxCodigo = 1;
-            if (idxNome   < 0) idxNome   = 2;
+                if (idxLoja   < 0) idxLoja   = 0;
+                if (idxCodigo < 0) idxCodigo = 1;
+                if (idxNome   < 0) idxNome   = 2;
 
-            String line;
-            while ((line = reader.readLine()) != null) {
-                line = safe(line);
-                if (line.isEmpty()) continue;
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    line = safe(line);
+                    if (line.isEmpty()) continue;
 
-                List<String> cols = splitCsv(line, sep);
-                if (cols.size() <= idxNome) continue; // linha incompleta
+                    List<String> cols = splitCsv(line, sep);
+                    if (cols.size() <= idxNome) continue;
 
-                String rawLoja   = get(cols, idxLoja);
-                String rawCodigo = get(cols, idxCodigo);
-                String rawNome   = get(cols, idxNome);
+                    String rawLoja   = get(cols, idxLoja);
+                    String rawCodigo = get(cols, idxCodigo);
+                    String rawNome   = get(cols, idxNome);
 
-                String loja          = normalizeNumeroLoja(rawLoja);
-                String codlocalizacao = normalizeCodigo(rawCodigo);
-                String setor         = limparNomeSetor(rawNome);
+                    String loja           = normalizeNumeroLoja(rawLoja);
+                    String codlocalizacao = normalizeCodigo(rawCodigo);
+                    String setor          = limparNomeSetor(rawNome);
 
-                if (codlocalizacao.isEmpty() || setor.isEmpty()) {
-                    continue;
+                    if (codlocalizacao.isEmpty() || setor.isEmpty()) continue;
+
+                    lista.add(new SetorLocalizacao(loja, codlocalizacao, setor));
                 }
-
-                lista.add(new SetorLocalizacao(loja, codlocalizacao, setor));
             }
         } catch (Exception e) {
-            Log.e("ImportadorSetor", "Erro ao importar setores", e);
-        } finally {
-            if (reader != null) {
-                try { reader.close(); } catch (Exception ignored) {}
-            }
+            Log.e(TAG, "Erro ao importar setores", e);
         }
+
         return lista;
     }
 
     /**
-     * Constrói um mapa código -> nome do setor a partir da lista importada.
-     * Usado em MapeadorSetor.aplicar().
+     * (Mantido) mapa por codlocalizacao APENAS.
+     * Atenção: isso mistura lojas se existir SEQLOCAL repetido entre lojas.
      */
     public static Map<String, String> toMap(List<SetorLocalizacao> setores) {
         Map<String, String> mapa = new HashMap<>();
@@ -113,6 +92,51 @@ public class ImportadorSetor {
         return mapa;
     }
 
+    /**
+     * (NOVO) mapa por chave composta: "loja|codlocalizacao"
+     * Isso evita misturar setores de lojas diferentes.
+     */
+    public static Map<String, String> toMapLojaCodigo(List<SetorLocalizacao> setores) {
+        Map<String, String> mapa = new HashMap<>();
+        if (setores == null) return mapa;
+
+        for (SetorLocalizacao s : setores) {
+            if (s == null) continue;
+
+            String loja = normalizeNumeroLoja(s.loja);
+            String cod  = normalizeCodigo(s.codlocalizacao);
+            String nome = safe(s.setor);
+
+            if (!loja.isEmpty() && !cod.isEmpty() && !nome.isEmpty()) {
+                mapa.put(loja + "|" + cod, nome);
+            }
+        }
+        return mapa;
+    }
+
+    /**
+     * (NOVO) Retorna nomes de setores únicos da loja (bom pra Spinner/Dropdown).
+     */
+    public static List<String> setoresUnicosPorLoja(List<SetorLocalizacao> setores, String lojaSelecionada) {
+        List<String> out = new ArrayList<>();
+        if (setores == null) return out;
+
+        String loja = normalizeNumeroLoja(lojaSelecionada);
+        Set<String> uniq = new LinkedHashSet<>();
+
+        for (SetorLocalizacao s : setores) {
+            if (s == null) continue;
+            String lojaItem = normalizeNumeroLoja(s.loja);
+            if (!loja.equals(lojaItem)) continue;
+
+            String nome = safe(s.setor);
+            if (!nome.isEmpty()) uniq.add(nome);
+        }
+
+        out.addAll(uniq);
+        return out;
+    }
+
     // ------------------- auxiliares -------------------
 
     private static String get(List<String> cols, int index) {
@@ -125,9 +149,7 @@ public class ImportadorSetor {
         if (cols == null || name == null) return -1;
         for (int i = 0; i < cols.size(); i++) {
             String c = cols.get(i);
-            if (c != null && c.trim().equalsIgnoreCase(name)) {
-                return i;
-            }
+            if (c != null && c.trim().equalsIgnoreCase(name)) return i;
         }
         return -1;
     }
@@ -136,45 +158,28 @@ public class ImportadorSetor {
         return v == null ? "" : v.trim();
     }
 
-    /** Normaliza número da loja removendo zeros à esquerda ("001" -> "1"). */
     private static String normalizeNumeroLoja(String raw) {
-        String s = safe(raw).replace("\u00A0", ""); // NBSP
-        if (s.matches("^\\d+$")) {
-            s = s.replaceFirst("^0+(?!$)", "");
-        }
+        String s = safe(raw).replace("\u00A0", "");
+        if (s.matches("^\\d+$")) s = s.replaceFirst("^0+(?!$)", "");
         return s;
     }
 
-    /** Normaliza código de localização. */
     private static String normalizeCodigo(String raw) {
         String s = safe(raw).replace("\u00A0", "");
-        if (s.matches("^\\d+$")) {
-            s = s.replaceFirst("^0+(?!$)", "");
-        }
+        if (s.matches("^\\d+$")) s = s.replaceFirst("^0+(?!$)", "");
         return s;
     }
 
-    /**
-     * Tratamento do nome do setor:
-     *  - remove "LOJA > ";
-     *  - "MATRIZ > MATRIZ" → "MATRIZ";
-     *  - "MATRIZ > X" → "X".
-     */
     private static String limparNomeSetor(String raw) {
         String s = safe(raw);
 
-        // compacta espaços
-        while (s.contains("  ")) {
-            s = s.replace("  ", " ");
-        }
+        while (s.contains("  ")) s = s.replace("  ", " ");
         s = s.trim();
 
-        // LOJA >
         if (s.startsWith("LOJA >")) {
             s = s.substring("LOJA >".length()).trim();
         }
 
-        // MATRIZ >
         String matrizPattern = "MATRIZ > MATRIZ";
         if (s.equalsIgnoreCase(matrizPattern)) {
             s = "MATRIZ";
@@ -185,7 +190,6 @@ public class ImportadorSetor {
         return s;
     }
 
-    /** Detecta separador mais provável na primeira linha. */
     private static char detectSeparator(String header) {
         int c = count(header, ',');
         int s = count(header, ';');
@@ -203,13 +207,22 @@ public class ImportadorSetor {
         return n;
     }
 
-    /**
-     * Split de CSV simples com suporte a aspas.
-     * Ex: a;"b;c";d  →  ["a","b;c","d"]
-     */
     private static List<String> splitCsv(String line, char sep) {
         List<String> out = new ArrayList<>();
         if (line == null) return out;
+
+        if (line.indexOf('"') < 0) {
+            int start = 0;
+            int len = line.length();
+            for (int i = 0; i < len; i++) {
+                if (line.charAt(i) == sep) {
+                    out.add(line.substring(start, i));
+                    start = i + 1;
+                }
+            }
+            out.add(line.substring(start));
+            return out;
+        }
 
         StringBuilder sb = new StringBuilder();
         boolean inQuotes = false;

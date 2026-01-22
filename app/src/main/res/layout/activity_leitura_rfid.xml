@@ -11,36 +11,35 @@
         android:id="@+id/header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_card_gradient"
-        android:paddingStart="20dp"
-        android:paddingTop="16dp"
-        android:paddingEnd="20dp"
-        android:paddingBottom="100dp"
+        android:background="#1565C0"
+        android:paddingStart="12dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="36dp"
         android:elevation="4dp"
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageButton
             android:id="@+id/btnBack"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:background="@drawable/bg_input_futurista"
-            android:backgroundTint="#33FFFFFF"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="#00FFFFFF"
             android:src="@drawable/ic_arrow_back"
-            android:padding="10dp"
+            android:padding="8dp"
             android:scaleType="centerInside"
-            app:tint="@color/white"
+            android:contentDescription="Voltar"
+            app:tint="#FFFFFF"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/pageTitle"
-            style="@style/TituloFuturista"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:text="Lendo Etiquetas"
-            android:textColor="@color/white"
-            android:textSize="20sp"
+            android:layout_marginStart="8dp"
+            android:text="CONFERÊNCIA"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="@id/btnBack"
             app:layout_constraintEnd_toEndOf="parent"
@@ -50,7 +49,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="6dp"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             app:layout_constraintTop_toBottomOf="@id/pageTitle">
@@ -60,30 +59,21 @@
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="@drawable/bg_input_futurista"
-                android:backgroundTint="#20FFFFFF"
-                android:paddingVertical="8dp"
-                android:paddingHorizontal="12dp"
-                android:layout_marginEnd="8dp">
-
-                <TextView
-                    android:text="LOJA ATUAL"
-                    android:textSize="10sp"
-                    android:textColor="#CCFFFFFF"
-                    android:letterSpacing="0.1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
+                android:background="#20FFFFFF"
+                android:paddingVertical="3dp"
+                android:paddingHorizontal="8dp"
+                android:layout_marginEnd="4dp">
 
                 <TextView
                     android:id="@+id/tvLojaSelecionada"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Loja Principal"
-                    android:textColor="@color/white"
-                    android:textSize="14sp"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
                     android:textStyle="bold"
                     android:ellipsize="end"
-                    android:maxLines="1"/>
+                    android:maxLines="1" />
             </LinearLayout>
 
             <LinearLayout
@@ -91,30 +81,21 @@
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="@drawable/bg_input_futurista"
-                android:backgroundTint="#20FFFFFF"
-                android:paddingVertical="8dp"
-                android:paddingHorizontal="12dp"
-                android:layout_marginStart="8dp">
-
-                <TextView
-                    android:text="SETOR / DEP."
-                    android:textSize="10sp"
-                    android:textColor="#CCFFFFFF"
-                    android:letterSpacing="0.1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
+                android:background="#20FFFFFF"
+                android:paddingVertical="3dp"
+                android:paddingHorizontal="8dp"
+                android:layout_marginStart="4dp">
 
                 <TextView
                     android:id="@+id/tvSetorSelecionado"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Almoxarifado"
-                    android:textColor="@color/white"
-                    android:textSize="14sp"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
                     android:textStyle="bold"
                     android:ellipsize="end"
-                    android:maxLines="1"/>
+                    android:maxLines="1" />
             </LinearLayout>
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
@@ -123,12 +104,12 @@
         android:id="@+id/status_card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginEnd="20dp"
-        android:layout_marginTop="-70dp"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="8dp"
-        app:cardBackgroundColor="@color/white"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="-26dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="6dp"
+        app:cardBackgroundColor="#FFFFFF"
         app:layout_constraintTop_toBottomOf="@id/header"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -137,48 +118,162 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:paddingVertical="6dp"
+            android:paddingHorizontal="12dp">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="ITENS IDENTIFICADOS"
-                android:textSize="11sp"
-                android:letterSpacing="0.15"
-                android:textStyle="bold"
-                android:textColor="#90A4AE" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
-            <TextView
-                android:id="@+id/tvContadorItens"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:text="0 / 0"
-                android:textSize="36sp"
-                android:fontFamily="sans-serif-black"
-                android:textColor="@color/novo_atacarejo_blue"
-                android:layout_marginTop="4dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="LIDOS: "
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textColor="#90A4AE" />
+
+                <TextView
+                    android:id="@+id/tvContadorItens"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:text="0 / 0"
+                    android:textSize="18sp"
+                    android:fontFamily="sans-serif-black"
+                    android:textColor="#1565C0" />
+            </LinearLayout>
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:background="#F0F0F0"
-                android:layout_marginVertical="12dp"/>
+                android:layout_marginVertical="4dp" />
 
             <TextView
                 android:id="@+id/tvMsgLeitura"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_input_futurista"
-                android:backgroundTint="#FFF8E1"
+                android:background="#FFF8E1"
                 android:gravity="center"
-                android:paddingVertical="10dp"
-                android:paddingHorizontal="16dp"
-                android:text="Aperte o gatilho para iniciar"
-                android:textColor="#F57C00"
-                android:textSize="13sp"
-                android:textStyle="bold" />
+                android:paddingVertical="6dp"
+                android:paddingHorizontal="8dp"
+                android:text="Aperte o gatilho"
+                android:textColor="#8A5A00"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/filter_card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="12dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="4dp"
+        app:cardBackgroundColor="#FFFFFF"
+        app:layout_constraintTop_toBottomOf="@id/status_card"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="4"
+            android:padding="6dp"
+            android:gravity="center_vertical">
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnFiltroTodas"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="34dp"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/abc_btn_default_mtrl_shape"
+                android:backgroundTint="#E3F2FD"
+                android:text="Todos"
+                android:textAllCaps="false"
+                android:textColor="#1565C0"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:padding="0dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                app:autoSizeTextType="uniform"
+                app:autoSizeMinTextSize="7sp"
+                app:autoSizeMaxTextSize="11sp"
+                android:maxLines="1" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnFiltroVerde"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="34dp"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/abc_btn_default_mtrl_shape"
+                android:backgroundTint="#E8F5E9"
+                android:text="Ok"
+                android:textAllCaps="false"
+                android:textColor="#2E7D32"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:padding="0dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                app:autoSizeTextType="uniform"
+                app:autoSizeMinTextSize="7sp"
+                app:autoSizeMaxTextSize="11sp"
+                android:maxLines="1" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnFiltroAmarelo"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="34dp"
+                android:layout_marginEnd="4dp"
+                android:background="@drawable/abc_btn_default_mtrl_shape"
+                android:backgroundTint="#FFF8E1"
+                android:text="Divergentes"
+                android:textAllCaps="false"
+                android:textColor="#F9A825"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:padding="0dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                app:autoSizeTextType="uniform"
+                app:autoSizeMinTextSize="7sp"
+                app:autoSizeMaxTextSize="11sp"
+                android:maxLines="1" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnFiltroVermelho"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="34dp"
+                android:background="@drawable/abc_btn_default_mtrl_shape"
+                android:backgroundTint="#FFEBEE"
+                android:text="Não encontrado"
+                android:textAllCaps="false"
+                android:textColor="#C62828"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:padding="0dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                app:autoSizeTextType="uniform"
+                app:autoSizeMinTextSize="7sp"
+                app:autoSizeMaxTextSize="11sp"
+                android:maxLines="1" />
+
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
@@ -186,45 +281,40 @@
         android:id="@+id/listaItensLidos"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="16dp"
-        android:paddingHorizontal="16dp"
-        android:paddingBottom="16dp"
+        android:layout_marginTop="4dp"
+        android:paddingHorizontal="12dp"
+        android:paddingBottom="2dp"
         android:clipToPadding="false"
-        app:layout_constraintTop_toBottomOf="@id/status_card"
         app:layout_constraintBottom_toTopOf="@id/controls_panel"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/filter_card" />
 
     <LinearLayout
         android:id="@+id/controls_panel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="@drawable/bg_dialog_rounded"
-        android:backgroundTint="@color/white"
+        android:background="#FFFFFF"
         android:elevation="20dp"
-        android:padding="24dp"
+        android:paddingHorizontal="12dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="8dp"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <!-- Linha de Potência -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="16dp">
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                app:tint="#78909C" />
+            android:layout_marginBottom="4dp">
 
             <TextView
                 android:text="Potência"
                 android:textColor="#455A64"
                 android:textStyle="bold"
-                android:textSize="14sp"
-                android:layout_marginStart="8dp"
+                android:textSize="11sp"
+                android:layout_marginStart="4dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
 
@@ -232,33 +322,35 @@
                 android:id="@+id/sbPotencia"
                 android:layout_width="0dp"
                 android:layout_weight="1"
-                android:layout_height="wrap_content"
+                android:layout_height="18dp"
                 android:max="33"
                 android:progress="20"
-                android:layout_marginHorizontal="8dp"
-                android:progressTint="@color/novo_atacarejo_blue"
-                android:thumbTint="@color/novo_atacarejo_blue" />
+                android:layout_marginHorizontal="6dp"
+                android:progressTint="#1565C0"
+                android:thumbTint="#1565C0" />
 
             <TextView
                 android:id="@+id/tvPotencia"
                 android:text="20"
-                android:textSize="16sp"
+                android:textSize="13sp"
                 android:textStyle="bold"
-                android:textColor="@color/novo_atacarejo_blue"
+                android:textColor="#1565C0"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="4dp" />
+                android:layout_marginStart="2dp" />
         </LinearLayout>
 
         <Button
             android:id="@+id/btnFinalizar"
             style="@style/BotaoFuturista"
             android:layout_width="match_parent"
-            android:layout_height="54dp"
+            android:layout_height="44dp"
             android:text="Finalizar e Exportar"
-            android:textSize="16sp"
+            android:textSize="13sp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
             app:iconGravity="textStart"
-            app:iconPadding="8dp" />
+            app:iconPadding="6dp" />
 
     </LinearLayout>
 

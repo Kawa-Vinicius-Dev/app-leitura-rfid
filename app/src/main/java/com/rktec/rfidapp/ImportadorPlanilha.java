@@ -14,6 +14,8 @@ import java.util.List;
 public class ImportadorPlanilha {
 
     private static final String TAG = "ImportadorPlanilha";
+    // Buffer maior para leitura de arquivos grandes
+    private static final int BUFFER_SIZE = 256 * 1024; // 256 KB
 
     /**
      * Cabeçalhos aceitos:
@@ -27,88 +29,120 @@ public class ImportadorPlanilha {
      * Layout novo:
      * LOJA;SEQBEM;CODGRUPO;CODLOCALIZACAO;NROBEM;NROINCORP;DESCRESUMIDA;
      * DESCDETALHADA;QTDBEM;NROPLAQUETA;NROSERIEBEM;MODELOBEM
-     *
-     * Mapeamento para ItemPlanilha:
-     *  - loja          ← EMPRESA / LOJA      (normaliza zeros à esquerda)
-     *  - codgrupo      ← CONTA / CODGRUPO
-     *  - sqbem         ← SEQBEM
-     *  - nrobem        ← NROBEM
-     *  - codlocalizacao← LOCALIZACAO / CODLOCALIZACAO
-     *  - nroplaqueta   ← NROPLAQUETA        (normaliza zeros à esquerda)
-     *  - descresumida  ← DESCRICAO / DESCRESUMIDA
-     *  - descdetalhada ← DESC_BEM / DESCDETALHADA
-     *  - modelobem     ← MODELO / MODELOBEM
-     *  - nroseriebem   ← SERIE / NROSERIEBEM
-     *  - qtdbem        ← QTDE / QTDBEM
-     *  - nroincorp     ← NROINCORP (se existir)
      */
     public static List<ItemPlanilha> importar(Context context, Uri fileUri) {
+        long inicioImportacao = System.currentTimeMillis(); // medição de tempo
+
         List<ItemPlanilha> lista = new ArrayList<>();
         if (context == null || fileUri == null) return lista;
 
-        BufferedReader reader = null;
-        try {
-            InputStream is = context.getContentResolver().openInputStream(fileUri);
-            if (is == null) return lista;
+        try (InputStream is = context.getContentResolver().openInputStream(fileUri)) {
+            if (is == null) {
+                Log.w(TAG, "InputStream nulo para URI: " + fileUri);
+                return lista;
+            }
 
-            // Mesmo esquema do setor: ISO-8859-1 pra planilha legada
-            reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.ISO_8859_1));
+            // ISO-8859-1 pra planilha legada + buffer grande
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(is, StandardCharsets.ISO_8859_1),
+                    BUFFER_SIZE
+            )) {
 
-            String header = reader.readLine();
-            if (header == null) return lista;
-
-            char sep = detectSeparator(header);
-            List<String> headerCols = splitCsv(header, sep);
-
-            // --- Índices baseados no cabeçalho REAL da planilha (antigo OU novo) ---
-            int idxEmpresa     = indexOfAnyIgnoreCase(headerCols, "EMPRESA", "LOJA");
-            int idxConta       = indexOfAnyIgnoreCase(headerCols, "CONTA", "CODGRUPO");
-            int idxSeqBem      = indexOfAnyIgnoreCase(headerCols, "SEQBEM");
-            int idxNroBem      = indexOfAnyIgnoreCase(headerCols, "NROBEM");
-            int idxLocalizacao = indexOfAnyIgnoreCase(headerCols, "LOCALIZACAO", "CODLOCALIZACAO");
-            int idxNroPlaqueta = indexOfAnyIgnoreCase(headerCols, "NROPLAQUETA");
-            int idxDescricao   = indexOfAnyIgnoreCase(headerCols, "DESCRICAO", "DESCRESUMIDA");
-            int idxDescBem     = indexOfAnyIgnoreCase(headerCols, "DESC_BEM", "DESCDETALHADA");
-            int idxModelo      = indexOfAnyIgnoreCase(headerCols, "MODELO", "MODELOBEM");
-            int idxSerieBem    = indexOfAnyIgnoreCase(headerCols, "SERIE", "NROSERIEBEM");
-            int idxQtde        = indexOfAnyIgnoreCase(headerCols, "QTDE", "QTDBEM");
-            int idxNroIncorp   = indexOfAnyIgnoreCase(headerCols, "NROINCORP");
-
-            // Fallback para posição fixa se algum não for encontrado
-            // (com base no layout antigo)
-            if (idxEmpresa     < 0) idxEmpresa     = 0;
-            if (idxConta       < 0) idxConta       = 8;
-            if (idxSeqBem      < 0) idxSeqBem      = 10;
-            if (idxNroBem      < 0) idxNroBem      = 11;
-            if (idxLocalizacao < 0) idxLocalizacao = 12;
-            if (idxNroPlaqueta < 0) idxNroPlaqueta = 13;
-            if (idxDescricao   < 0) idxDescricao   = 15;
-            if (idxDescBem     < 0) idxDescBem     = 16;
-            if (idxModelo      < 0) idxModelo      = 17;
-            if (idxSerieBem    < 0) idxSerieBem    = 18;
-            if (idxQtde        < 0) idxQtde        = 19;
-            // idxNroIncorp: no layout antigo não existe, então -1 mesmo é ok
-
-            // Aqui vem a mágica: juntar linhas quebradas
-            String current = null;
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String trimmed = safe(line);
-                if (trimmed.isEmpty()) {
-                    continue;
+                String header = reader.readLine();
+                if (header == null) {
+                    Log.w(TAG, "Cabeçalho vazio na planilha.");
+                    return lista;
                 }
 
-                if (current == null) {
-                    // Primeiro registro
-                    current = trimmed;
-                    continue;
+                char sep = detectSeparator(header);
+                List<String> headerCols = splitCsv(header, sep);
+
+                // --- Índices baseados no cabeçalho REAL da planilha (antigo OU novo) ---
+                int idxEmpresa     = indexOfAnyIgnoreCase(headerCols, "EMPRESA", "LOJA");
+                int idxConta       = indexOfAnyIgnoreCase(headerCols, "CONTA", "CODGRUPO");
+                int idxSeqBem      = indexOfAnyIgnoreCase(headerCols, "SEQBEM");
+                int idxNroBem      = indexOfAnyIgnoreCase(headerCols, "NROBEM");
+                int idxLocalizacao = indexOfAnyIgnoreCase(headerCols, "LOCALIZACAO", "CODLOCALIZACAO");
+                int idxNroPlaqueta = indexOfAnyIgnoreCase(headerCols, "NROPLAQUETA");
+                int idxDescricao   = indexOfAnyIgnoreCase(headerCols, "DESCRICAO", "DESCRESUMIDA");
+                int idxDescBem     = indexOfAnyIgnoreCase(headerCols, "DESC_BEM", "DESCDETALHADA");
+                int idxModelo      = indexOfAnyIgnoreCase(headerCols, "MODELO", "MODELOBEM");
+                int idxSerieBem    = indexOfAnyIgnoreCase(headerCols, "SERIE", "NROSERIEBEM");
+                int idxQtde        = indexOfAnyIgnoreCase(headerCols, "QTDE", "QTDBEM");
+                int idxNroIncorp   = indexOfAnyIgnoreCase(headerCols, "NROINCORP");
+
+                // Fallback para posição fixa se algum não for encontrado
+                if (idxEmpresa     < 0) idxEmpresa     = 0;
+                if (idxConta       < 0) idxConta       = 8;
+                if (idxSeqBem      < 0) idxSeqBem      = 10;
+                if (idxNroBem      < 0) idxNroBem      = 11;
+                if (idxLocalizacao < 0) idxLocalizacao = 12;
+                if (idxNroPlaqueta < 0) idxNroPlaqueta = 13;
+                if (idxDescricao   < 0) idxDescricao   = 15;
+                if (idxDescBem     < 0) idxDescBem     = 16;
+                if (idxModelo      < 0) idxModelo      = 17;
+                if (idxSerieBem    < 0) idxSerieBem    = 18;
+                if (idxQtde        < 0) idxQtde        = 19;
+                // idxNroIncorp pode ficar -1 mesmo
+
+                // Pré-calcula o maior índice para validação rápida
+                final int minIndex = max(
+                        idxEmpresa, idxSeqBem, idxConta, idxLocalizacao,
+                        idxNroBem, idxNroIncorp, idxDescricao, idxDescBem,
+                        idxQtde, idxNroPlaqueta, idxSerieBem, idxModelo
+                );
+
+                // Em vez de String current, usamos StringBuilder
+                StringBuilder currentSb = null;
+                String line;
+
+                while ((line = reader.readLine()) != null) {
+                    String trimmed = safe(line);
+                    if (trimmed.isEmpty()) {
+                        continue;
+                    }
+
+                    if (currentSb == null) {
+                        // Primeiro registro
+                        currentSb = new StringBuilder(trimmed);
+                        continue;
+                    }
+
+                    if (isInicioDeRegistro(trimmed)) {
+                        // Finaliza registro anterior
+                        adicionarItem(
+                                lista,
+                                currentSb.toString(),
+                                sep,
+                                idxEmpresa,
+                                idxSeqBem,
+                                idxConta,
+                                idxLocalizacao,
+                                idxNroBem,
+                                idxNroIncorp,
+                                idxDescricao,
+                                idxDescBem,
+                                idxQtde,
+                                idxNroPlaqueta,
+                                idxSerieBem,
+                                idxModelo,
+                                minIndex
+                        );
+
+                        // Começa novo
+                        currentSb.setLength(0);
+                        currentSb.append(trimmed);
+                    } else {
+                        // Continuação de descrição quebrada
+                        currentSb.append(' ').append(trimmed);
+                    }
                 }
 
-                if (isInicioDeRegistro(trimmed)) {
-                    // Parece início de um novo registro: finaliza o anterior
+                // Flush do último registro
+                if (currentSb != null && currentSb.length() > 0) {
                     adicionarItem(
                             lista,
-                            current,
+                            currentSb.toString(),
                             sep,
                             idxEmpresa,
                             idxSeqBem,
@@ -121,44 +155,18 @@ public class ImportadorPlanilha {
                             idxQtde,
                             idxNroPlaqueta,
                             idxSerieBem,
-                            idxModelo
+                            idxModelo,
+                            minIndex
                     );
-
-                    current = trimmed;
-                } else {
-                    // Continuação de texto (descrição quebrada em várias linhas)
-                    current = current + " " + trimmed;
                 }
+
+                long fimImportacao = System.currentTimeMillis();
+                Log.d(TAG, "Itens importados: " + lista.size()
+                        + " em " + (fimImportacao - inicioImportacao) + " ms");
             }
 
-            // Flush do último registro
-            if (current != null) {
-                adicionarItem(
-                        lista,
-                        current,
-                        sep,
-                        idxEmpresa,
-                        idxSeqBem,
-                        idxConta,
-                        idxLocalizacao,
-                        idxNroBem,
-                        idxNroIncorp,
-                        idxDescricao,
-                        idxDescBem,
-                        idxQtde,
-                        idxNroPlaqueta,
-                        idxSerieBem,
-                        idxModelo
-                );
-            }
-
-            Log.d(TAG, "Itens importados: " + lista.size());
         } catch (Exception e) {
             Log.e(TAG, "Erro ao importar planilha", e);
-        } finally {
-            if (reader != null) {
-                try { reader.close(); } catch (Exception ignored) {}
-            }
         }
 
         return lista;
@@ -182,7 +190,9 @@ public class ImportadorPlanilha {
         char c1 = s.charAt(1);
         char c2 = s.charAt(2);
 
-        return Character.isDigit(c0) && Character.isDigit(c1) && Character.isDigit(c2);
+        return (c0 >= '0' && c0 <= '9')
+                && (c1 >= '0' && c1 <= '9')
+                && (c2 >= '0' && c2 <= '9');
     }
 
     private static void adicionarItem(
@@ -200,7 +210,8 @@ public class ImportadorPlanilha {
             int idxQtde,         // QTDE / QTDBEM -> qtdbem
             int idxNroPlaqueta,  // NROPLAQUETA -> nroplaqueta
             int idxSerieBem,     // SERIE / NROSERIEBEM -> nroseriebem
-            int idxModelo        // MODELO / MODELOBEM -> modelobem
+            int idxModelo,       // MODELO / MODELOBEM -> modelobem
+            int minIndex         // maior índice necessário
     ) {
         if (rawLine == null) return;
         String line = rawLine.trim();
@@ -208,30 +219,24 @@ public class ImportadorPlanilha {
 
         List<String> cols = splitCsv(line, sep);
 
-        // Garante que temos pelo menos colunas suficientes
-        int minIndex = max(
-                idxEmpresa, idxSeqBem, idxConta, idxLocalizacao,
-                idxNroBem, idxNroIncorp, idxDescricao, idxDescBem,
-                idxQtde, idxNroPlaqueta, idxSerieBem, idxModelo
-        );
-
         if (cols.size() <= minIndex) {
+            // mesma lógica: apenas ignora linha ruim
             Log.w(TAG, "Linha ignorada (colunas insuficientes): " + line);
             return;
         }
 
-        String loja        = normalizeLoja(safe(get(cols, idxEmpresa)));
-        String seqBem      = safe(get(cols, idxSeqBem));
-        String codGrupo    = safe(get(cols, idxConta));
-        String codLocal    = safe(get(cols, idxLocalizacao));
-        String nroBem      = safe(get(cols, idxNroBem));
-        String nroIncorp   = (idxNroIncorp >= 0 ? safe(get(cols, idxNroIncorp)) : "");
-        String descRes     = safe(get(cols, idxDescricao));
-        String descDet     = safe(get(cols, idxDescBem));
-        String qtdBem      = safe(get(cols, idxQtde));
-        String nroPlaqueta = normalizePlaqueta(safe(get(cols, idxNroPlaqueta)));
-        String nroSerie    = safe(get(cols, idxSerieBem));
-        String modelo      = safe(get(cols, idxModelo));
+        String loja        = normalizeLoja(safeGet(cols, idxEmpresa));
+        String seqBem      = safeGet(cols, idxSeqBem);
+        String codGrupo    = safeGet(cols, idxConta);
+        String codLocal    = safeGet(cols, idxLocalizacao);
+        String nroBem      = safeGet(cols, idxNroBem);
+        String nroIncorp   = (idxNroIncorp >= 0 ? safeGet(cols, idxNroIncorp) : "");
+        String descRes     = safeGet(cols, idxDescricao);
+        String descDet     = safeGet(cols, idxDescBem);
+        String qtdBem      = safeGet(cols, idxQtde);
+        String nroPlaqueta = normalizePlaqueta(safeGet(cols, idxNroPlaqueta));
+        String nroSerie    = safeGet(cols, idxSerieBem);
+        String modelo      = safeGet(cols, idxModelo);
 
         ItemPlanilha item = new ItemPlanilha(
                 loja,
@@ -266,6 +271,10 @@ public class ImportadorPlanilha {
         return v == null ? "" : v;
     }
 
+    private static String safeGet(List<String> cols, int index) {
+        return safe(get(cols, index));
+    }
+
     private static int indexOfIgnoreCase(List<String> cols, String name) {
         if (cols == null || name == null) return -1;
         for (int i = 0; i < cols.size(); i++) {
@@ -289,26 +298,66 @@ public class ImportadorPlanilha {
 
     private static String safe(String v) {
         if (v == null) return "";
-        // troca NBSP por espaço normal e trim
-        return v.replace('\u00A0', ' ').trim();
+        // troca NBSP por espaço normal e faz trim
+        // evitamos regex aqui pra ficar mais rápido
+        int len = v.length();
+        StringBuilder sb = null;
+        for (int i = 0; i < len; i++) {
+            char ch = v.charAt(i);
+            if (ch == '\u00A0') {
+                if (sb == null) {
+                    sb = new StringBuilder(len);
+                    sb.append(v, 0, i);
+                }
+                sb.append(' ');
+            } else if (sb != null) {
+                sb.append(ch);
+            }
+        }
+        String result = (sb == null ? v : sb.toString());
+        return result.trim();
     }
 
     /** Normaliza número da loja removendo zeros à esquerda ("001" -> "1"). */
     private static String normalizeLoja(String raw) {
         String s = safe(raw);
-        if (s.matches("^\\d+$")) {
-            s = s.replaceFirst("^0+(?!$)", "");
+        if (s.isEmpty()) return s;
+
+        // verifica se é só dígito sem regex
+        int len = s.length();
+        for (int i = 0; i < len; i++) {
+            char ch = s.charAt(i);
+            if (ch < '0' || ch > '9') {
+                return s; // não é só número, devolve como está
+            }
         }
-        return s;
+
+        // remove zeros à esquerda
+        int idx = 0;
+        while (idx < len - 1 && s.charAt(idx) == '0') {
+            idx++;
+        }
+        return (idx == 0) ? s : s.substring(idx);
     }
 
     /** Normaliza plaqueta, removendo zeros à esquerda. */
     private static String normalizePlaqueta(String raw) {
         String s = safe(raw);
-        if (s.matches("^\\d+$")) {
-            s = s.replaceFirst("^0+(?!$)", "");
+        if (s.isEmpty()) return s;
+
+        int len = s.length();
+        for (int i = 0; i < len; i++) {
+            char ch = s.charAt(i);
+            if (ch < '0' || ch > '9') {
+                return s; // tem algo que não é dígito, não mexe
+            }
         }
-        return s;
+
+        int idx = 0;
+        while (idx < len - 1 && s.charAt(idx) == '0') {
+            idx++;
+        }
+        return (idx == 0) ? s : s.substring(idx);
     }
 
     /** Detecta o separador mais provável na linha de cabeçalho. */
@@ -334,10 +383,10 @@ public class ImportadorPlanilha {
      * Ex: a;"b;c";d  →  ["a","b;c","d"]
      */
     private static List<String> splitCsv(String line, char sep) {
-        List<String> out = new ArrayList<>();
+        List<String> out = new ArrayList<>(32); // capacidade inicial pra reduzir realocação
         if (line == null) return out;
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(line.length());
         boolean inQuotes = false;
 
         for (int i = 0; i < line.length(); i++) {
