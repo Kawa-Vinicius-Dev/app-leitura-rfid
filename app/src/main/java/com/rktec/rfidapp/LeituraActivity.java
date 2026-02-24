@@ -202,8 +202,8 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                 mostrarDialogConfirmacao(
                         "ATENÇÃO",
                         Color.parseColor("#D32F2F"),
-                        "Foram identificados itens de OUTRA LOJA.\n\n" +
-                                "Para corrigir, será necessário trocar a loja antes de finalizar.\n\n" +
+                        "Foram identificados itens de OUTRA UNIDADE.\n\n" +
+                                "Não é possível prosseguir, pois a transferência deve ser realizada pelo sistema após emissão de nota fiscal.\n\n" +
                                 "Deseja verificar agora?",
                         "VERIFICAR",
                         () -> {
