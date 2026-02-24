@@ -254,7 +254,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
             @Override public void onStopTrackingTouch(SeekBar seekBar) { }
         });
 
-        simularItensParaTeste();
+        //simularItensParaTeste();
         aplicarFiltro(FiltroStatus.TODAS);
 
         getOnBackPressedDispatcher().addCallback(this,
@@ -1164,7 +1164,8 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         }, 100);
     }
     // ===== TESTE SEM LEITOR (REMOVER DEPOIS) =====
-    // ===== TESTE SEM LEITOR (REMOVER DEPOIS) =====
+
+    /*
     private void simularItensParaTeste() {
         itensSessao.clear();
 
@@ -1192,6 +1193,8 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         itensSessao.add(itemSetorErrado);
         itensSessao.add(itemLojaErrada);
     }
+
+     */
 
 
 }
