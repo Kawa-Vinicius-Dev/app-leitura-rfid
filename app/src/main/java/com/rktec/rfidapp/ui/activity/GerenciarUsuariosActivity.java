@@ -1,9 +1,16 @@
-package com.rktec.rfidapp;
+package com.rktec.rfidapp.ui.activity;
 
 import android.os.Bundle;
 import android.widget.ImageButton;
 import android.widget.ListView;
+
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.rktec.rfidapp.R;
+import com.rktec.rfidapp.model.Usuario;
+import com.rktec.rfidapp.ui.adapter.UsuarioAdapter;
+import com.rktec.rfidapp.data.dao.UsuarioDAO;
+
 import java.util.List;
 
 public class GerenciarUsuariosActivity extends AppCompatActivity {

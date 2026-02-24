@@ -1,6 +1,11 @@
-package com.rktec.rfidapp;
+package com.rktec.rfidapp.util;
 
 import android.content.Context;
+
+import com.rktec.rfidapp.model.DadosGlobais;
+import com.rktec.rfidapp.model.ItemPlanilha;
+import com.rktec.rfidapp.model.SetorLocalizacao;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;

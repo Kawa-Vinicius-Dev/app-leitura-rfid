@@ -1,4 +1,4 @@
-package com.rktec.rfidapp;
+package com.rktec.rfidapp.data.dao;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -6,6 +6,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.rktec.rfidapp.model.Usuario;
+import com.rktec.rfidapp.data.database.AppDatabaseHelper;
 
 public class UsuarioDAO {
     private SQLiteDatabase db;

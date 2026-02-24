@@ -1,11 +1,15 @@
-package com.rktec.rfidapp;
+package com.rktec.rfidapp.ui.activity;
 
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.rktec.rfidapp.R;
+import com.rktec.rfidapp.data.dao.UsuarioDAO;
 
 public class CadastroActivity extends AppCompatActivity {
 
@@ -28,15 +32,11 @@ public class CadastroActivity extends AppCompatActivity {
 
         // SE NÃO FOR PRIMEIRO ACESSO, GARANTE QUE O LOGADO É CEO
         if (!primeiroAcesso) {
-            String nomeLogado = getSharedPreferences("prefs", MODE_PRIVATE)
-                    .getString("usuario_nome", "");
-            String permissaoLogado = getSharedPreferences("prefs", MODE_PRIVATE)
-                    .getString("usuario_permissao", "MEMBRO");
+            String nomeLogado = getSharedPreferences("prefs", MODE_PRIVATE).getString("usuario_nome", "");
+            String permissaoLogado = getSharedPreferences("prefs", MODE_PRIVATE).getString("usuario_permissao", "MEMBRO");
 
             if (!"CEO".equalsIgnoreCase(permissaoLogado)) {
-                Toast.makeText(this,
-                        "Somente o CEO pode cadastrar novos usuários.",
-                        Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Somente o CEO pode cadastrar novos usuários.", Toast.LENGTH_LONG).show();
                 finish();
                 return;
             }

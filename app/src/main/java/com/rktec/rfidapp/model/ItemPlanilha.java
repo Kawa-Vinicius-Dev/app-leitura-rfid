@@ -1,4 +1,4 @@
-package com.rktec.rfidapp;
+package com.rktec.rfidapp.model;
 
 public class ItemPlanilha {
     public String loja, sqbem, codgrupo, codlocalizacao, nrobem, nroincorp,

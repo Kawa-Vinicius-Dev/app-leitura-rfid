@@ -1,4 +1,4 @@
-package com.rktec.rfidapp;
+package com.rktec.rfidapp.ui.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,6 +11,11 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.view.View;
+
+import com.rktec.rfidapp.model.DadosGlobais;
+import com.rktec.rfidapp.R;
+import com.rktec.rfidapp.model.Usuario;
+import com.rktec.rfidapp.data.dao.UsuarioDAO;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -39,11 +44,7 @@ public class LoginActivity extends AppCompatActivity {
 
             Usuario usuario = dao.autenticar(nome, senha);
             if (usuario != null) {
-                getSharedPreferences("prefs", MODE_PRIVATE)
-                        .edit()
-                        .putString("usuario_nome", nome)
-                        .putString("usuario_permissao", usuario.permissao)
-                        .apply();
+                getSharedPreferences("prefs", MODE_PRIVATE).edit().putString("usuario_nome", nome).putString("usuario_permissao", usuario.permissao).apply();
                 DadosGlobais.getInstance().setUsuario(nome);
 
                 startActivity(new Intent(this, MainActivity.class));
@@ -75,19 +76,13 @@ public class LoginActivity extends AppCompatActivity {
 
         String mensagem;
         if (nomeCEO != null && !nomeCEO.trim().isEmpty()) {
-            mensagem = "Para criar uma conta neste sistema, entre em contato com o CEO do patrimônio:\n\n"
-                    + nomeCEO
-                    + "\n\nSomente ele pode realizar novos cadastros de usuários.";
+            mensagem = "Para criar uma conta neste sistema, entre em contato com o CEO do patrimônio:\n\n" + nomeCEO + "\n\nSomente ele pode realizar novos cadastros de usuários.";
         } else {
-            mensagem = "Para criar uma conta neste sistema, entre em contato com o responsável pelo patrimônio.\n\n" +
-                    "Somente o CEO pode realizar novos cadastros de usuários.";
+            mensagem = "Para criar uma conta neste sistema, entre em contato com o responsável pelo patrimônio.\n\n" + "Somente o CEO pode realizar novos cadastros de usuários.";
         }
         tvContatoMsg.setText(mensagem);
 
-        AlertDialog dialog = new AlertDialog.Builder(this, R.style.AppDialogTheme)
-                .setView(view)
-                .setCancelable(true)
-                .create();
+        AlertDialog dialog = new AlertDialog.Builder(this, R.style.AppDialogTheme).setView(view).setCancelable(true).create();
 
         btnContatoOk.setOnClickListener(v -> dialog.dismiss());
 

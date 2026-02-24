@@ -1,4 +1,4 @@
-package com.rktec.rfidapp;
+package com.rktec.rfidapp.rfid;
 
 import android.content.Context;
 import android.util.Log;

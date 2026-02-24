@@ -1,8 +1,10 @@
-package com.rktec.rfidapp;
+package com.rktec.rfidapp.importacao;
 
 import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
+
+import com.rktec.rfidapp.model.ItemPlanilha;
 
 import java.io.BufferedReader;
 import java.io.InputStream;

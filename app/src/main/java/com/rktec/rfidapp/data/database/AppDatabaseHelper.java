@@ -1,5 +1,5 @@
 // AppDatabaseHelper.java
-package com.rktec.rfidapp;
+package com.rktec.rfidapp.data.database;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;

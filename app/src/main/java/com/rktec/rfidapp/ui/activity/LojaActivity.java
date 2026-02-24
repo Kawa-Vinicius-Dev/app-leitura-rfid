@@ -1,4 +1,4 @@
-package com.rktec.rfidapp;
+package com.rktec.rfidapp.ui.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,6 +10,10 @@ import android.text.Editable;
 import android.text.TextWatcher;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.rktec.rfidapp.model.DadosGlobais;
+import com.rktec.rfidapp.model.ItemPlanilha;
+import com.rktec.rfidapp.R;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -43,18 +47,15 @@ public class LojaActivity extends AppCompatActivity {
 
         ListView lv = findViewById(R.id.listViewLojas);
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_list_item_1,
-                lojasFiltradas
-        );
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, lojasFiltradas);
         lv.setAdapter(adapter);
 
         // Barra de busca
         EditText edtBusca = findViewById(R.id.editSearchLoja);
         edtBusca.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -78,7 +79,8 @@ public class LojaActivity extends AppCompatActivity {
             }
 
             @Override
-            public void afterTextChanged(Editable s) {}
+            public void afterTextChanged(Editable s) {
+            }
         });
 
         // Usa a lista filtrada no clique

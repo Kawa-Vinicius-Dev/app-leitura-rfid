@@ -1,4 +1,4 @@
-package com.rktec.rfidapp;
+package com.rktec.rfidapp.ui.adapter;
 
 import android.graphics.Color;
 import android.view.LayoutInflater;
@@ -10,6 +10,9 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.rktec.rfidapp.model.ItemLeituraSessao;
+import com.rktec.rfidapp.R;
 
 import java.util.List;
 

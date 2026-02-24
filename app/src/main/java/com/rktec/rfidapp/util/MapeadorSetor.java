@@ -1,4 +1,6 @@
-package com.rktec.rfidapp;
+package com.rktec.rfidapp.util;
+
+import com.rktec.rfidapp.model.ItemPlanilha;
 
 import java.util.HashMap;
 import java.util.List;

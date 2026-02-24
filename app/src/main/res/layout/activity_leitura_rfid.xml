@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F5F7FA"
-    tools:context=".LeituraActivity">
+    tools:context=".ui.activity.LeituraActivity">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/header"

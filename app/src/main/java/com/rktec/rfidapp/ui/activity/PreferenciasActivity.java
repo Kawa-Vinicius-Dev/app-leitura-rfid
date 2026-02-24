@@ -1,7 +1,10 @@
-package com.rktec.rfidapp;
+package com.rktec.rfidapp.ui.activity;
 
 import android.os.Bundle;
+
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.rktec.rfidapp.R;
 
 public class PreferenciasActivity extends AppCompatActivity {
     @Override

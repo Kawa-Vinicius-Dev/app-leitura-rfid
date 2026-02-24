@@ -1,4 +1,4 @@
-package com.rktec.rfidapp;
+package com.rktec.rfidapp.model;
 
 public class ItemLeituraSessao {
 

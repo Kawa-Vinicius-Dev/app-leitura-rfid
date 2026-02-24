@@ -1,4 +1,4 @@
-package com.rktec.rfidapp;
+package com.rktec.rfidapp.model;
 
 /**
  * Representa o vínculo entre LOJA, código de localização e nome do setor.

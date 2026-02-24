@@ -1,7 +1,10 @@
-package com.rktec.rfidapp;
+package com.rktec.rfidapp.exportacao;
 
 import android.content.Context;
 import android.util.Log;
+
+import com.rktec.rfidapp.model.ItemPlanilha;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.util.List;

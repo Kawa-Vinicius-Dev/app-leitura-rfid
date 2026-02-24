@@ -1,4 +1,4 @@
-package com.rktec.rfidapp;
+package com.rktec.rfidapp.ui.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,6 +11,11 @@ import android.text.TextWatcher;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.rktec.rfidapp.model.DadosGlobais;
+import com.rktec.rfidapp.importacao.ImportadorSetor;
+import com.rktec.rfidapp.R;
+import com.rktec.rfidapp.model.SetorLocalizacao;
 
 import java.util.ArrayList;
 import java.util.List;

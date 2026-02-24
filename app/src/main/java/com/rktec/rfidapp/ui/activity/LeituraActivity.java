@@ -1,4 +1,4 @@
-package com.rktec.rfidapp;
+package com.rktec.rfidapp.ui.activity;
 
 import android.content.Intent;
 import android.content.res.ColorStateList;
@@ -34,6 +34,15 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.pda.rfid.EPCModel;
 import com.pda.rfid.IAsynchronousMessage;
+import com.rktec.rfidapp.model.DadosGlobais;
+import com.rktec.rfidapp.exportacao.ExportadorPlanilha;
+import com.rktec.rfidapp.model.ItemLeituraSessao;
+import com.rktec.rfidapp.ui.adapter.ItemLeituraSessaoAdapter;
+import com.rktec.rfidapp.model.ItemPlanilha;
+import com.rktec.rfidapp.rfid.LeitorRFID;
+import com.rktec.rfidapp.util.LogHelper;
+import com.rktec.rfidapp.R;
+import com.rktec.rfidapp.model.SetorLocalizacao;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -42,6 +51,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
+import com.rktec.rfidapp.data.database.BancoHelper;
+
 
 public class LeituraActivity extends AppCompatActivity implements IAsynchronousMessage {
 
@@ -49,7 +60,8 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
     private final List<ItemLeituraSessao> itensSessao = new ArrayList<>();
     private final List<ItemLeituraSessao> itensVisiveis = new ArrayList<>();
 
-    private enum FiltroStatus { TODAS, CONFORME, DIVERGENTE, NAO_CADASTRADO }
+    private enum FiltroStatus {TODAS, CONFORME, DIVERGENTE, NAO_CADASTRADO}
+
     private FiltroStatus filtroAtual = FiltroStatus.TODAS;
 
     // Botões do filtro
@@ -88,10 +100,10 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         back.setOnClickListener(v -> solicitarConfirmacaoSaida());
 
         // ====== FILTRO: pegar botões ======
-        btnFiltroTodas   = findViewById(R.id.btnFiltroTodas);
-        btnFiltroVerde   = findViewById(R.id.btnFiltroVerde);
+        btnFiltroTodas = findViewById(R.id.btnFiltroTodas);
+        btnFiltroVerde = findViewById(R.id.btnFiltroVerde);
         btnFiltroAmarelo = findViewById(R.id.btnFiltroAmarelo);
-        btnFiltroVermelho= findViewById(R.id.btnFiltroVermelho);
+        btnFiltroVermelho = findViewById(R.id.btnFiltroVermelho);
 
         // ====== UI: botões com TEXTO (SEM ÍCONES) ======
         configurarBotoesFiltroComIcones();
@@ -108,18 +120,17 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
             return;
         }
 
-        listaPlanilha   = DadosGlobais.getInstance().getListaPlanilha();
-        listaSetores    = DadosGlobais.getInstance().getListaSetores();
+        listaPlanilha = DadosGlobais.getInstance().getListaPlanilha();
+        listaSetores = DadosGlobais.getInstance().getListaSetores();
         lojaSelecionada = DadosGlobais.getInstance().getLojaSelecionada();
-        usuario         = DadosGlobais.getInstance().getUsuario();
+        usuario = DadosGlobais.getInstance().getUsuario();
 
         if (usuario == null) {
-            usuario = getSharedPreferences("prefs", MODE_PRIVATE)
-                    .getString("usuario_nome", "Usuário");
+            usuario = getSharedPreferences("prefs", MODE_PRIVATE).getString("usuario_nome", "Usuário");
         }
 
         if (listaPlanilha == null) listaPlanilha = new ArrayList<>();
-        if (listaSetores == null)  listaSetores  = new ArrayList<>();
+        if (listaSetores == null) listaSetores = new ArrayList<>();
 
         ((TextView) findViewById(R.id.tvLojaSelecionada)).setText("Loja: " + lojaSelecionada);
         ((TextView) findViewById(R.id.tvSetorSelecionado)).setText("Setor: " + setorSelecionado.setor);
@@ -164,8 +175,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
             }
 
             @Override
-            public void onChildDraw(Canvas c, RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder,
-                                    float dX, float dY, int actionState, boolean isCurrentlyActive) {
+            public void onChildDraw(Canvas c, RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
                 super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
 
                 if (dX < 0) {
@@ -173,9 +183,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
 
                     Paint p = new Paint();
                     p.setColor(Color.parseColor("#D32F2F"));
-                    c.drawRect(
-                            itemView.getRight() + dX, itemView.getTop(),
-                            itemView.getRight(), itemView.getBottom(), p);
+                    c.drawRect(itemView.getRight() + dX, itemView.getTop(), itemView.getRight(), itemView.getBottom(), p);
 
                     Drawable icon = ContextCompat.getDrawable(itemView.getContext(), R.drawable.ic_delete);
                     if (icon != null) {
@@ -199,32 +207,17 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
 
             // PRIORIDADE 1: LOJA ERRADA (mais grave)
             if (existeItemLojaErrada()) {
-                mostrarDialogConfirmacao(
-                        "ATENÇÃO",
-                        Color.parseColor("#D32F2F"),
-                        "Foram identificados itens de OUTRA UNIDADE.\n\n" +
-                                "Não é possível prosseguir, pois a transferência deve ser realizada pelo sistema após emissão de nota fiscal.\n\n" +
-                                "Deseja verificar agora?",
-                        "VERIFICAR",
-                        () -> {
-                            // Usuário escolheu verificar, não faz nada
-                        }
-                );
+                mostrarDialogConfirmacao("ATENÇÃO", Color.parseColor("#D32F2F"), "Foram identificados itens de OUTRA UNIDADE.\n\n" + "Não é possível prosseguir, pois a transferência deve ser realizada pelo sistema após emissão de nota fiscal.\n\n" + "Deseja verificar agora?", "VERIFICAR", () -> {
+                    // Usuário escolheu verificar, não faz nada
+                });
                 return;
             }
 
             // PRIORIDADE 2: SETOR ERRADO
             if (existeItemSetorErrado()) {
-                mostrarDialogConfirmacao(
-                        "Itens divergentes",
-                        Color.parseColor("#F9A825"),
-                        "Há itens em setor diferente do selecionado.\n\n" +
-                                "Deseja verificar/corrigir antes de finalizar?",
-                        "VERIFICAR",
-                        () -> {
-                            // Usuário escolheu verificar
-                        }
-                );
+                mostrarDialogConfirmacao("Itens divergentes", Color.parseColor("#F9A825"), "Há itens em setor diferente do selecionado.\n\n" + "Deseja verificar/corrigir antes de finalizar?", "VERIFICAR", () -> {
+                    // Usuário escolheu verificar
+                });
                 return;
             }
 
@@ -250,26 +243,31 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                 if (leitorRFID != null) leitorRFID.setPotencia(potenciaAtual);
             }
 
-            @Override public void onStartTrackingTouch(SeekBar seekBar) { }
-            @Override public void onStopTrackingTouch(SeekBar seekBar) { }
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
         });
 
         //simularItensParaTeste();
         aplicarFiltro(FiltroStatus.TODAS);
 
-        getOnBackPressedDispatcher().addCallback(this,
-                new OnBackPressedCallback(true) {
-                    @Override
-                    public void handleOnBackPressed() {
-                        solicitarConfirmacaoSaida();
-                    }
-                });
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                solicitarConfirmacaoSaida();
+            }
+        });
 
     }
 
     // ====== UI: BOTÕES COM TEXTO (SEM ÍCONES) ======
     private void configurarBotoesFiltroComIcones() {
-        if (btnFiltroTodas == null || btnFiltroVerde == null || btnFiltroAmarelo == null || btnFiltroVermelho == null) return;
+        if (btnFiltroTodas == null || btnFiltroVerde == null || btnFiltroAmarelo == null || btnFiltroVermelho == null)
+            return;
 
         // Textos
         btnFiltroTodas.setText("Todos");
@@ -313,9 +311,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
             } else if (filtroAtual == FiltroStatus.CONFORME && item.status == ItemLeituraSessao.STATUS_OK) {
                 itensVisiveis.add(item);
 
-            } else if (filtroAtual == FiltroStatus.DIVERGENTE
-                    && (item.status == ItemLeituraSessao.STATUS_SETOR_ERRADO
-                    || item.status == ItemLeituraSessao.STATUS_LOJA_ERRADA)) {
+            } else if (filtroAtual == FiltroStatus.DIVERGENTE && (item.status == ItemLeituraSessao.STATUS_SETOR_ERRADO || item.status == ItemLeituraSessao.STATUS_LOJA_ERRADA)) {
                 itensVisiveis.add(item);
 
             } else if (filtroAtual == FiltroStatus.NAO_CADASTRADO && item.status == ItemLeituraSessao.STATUS_NAO_ENCONTRADO) {
@@ -328,10 +324,12 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
     }
 
     private void atualizarEstiloBotoesFiltro() {
-        if (btnFiltroTodas != null)    btnFiltroTodas.setEnabled(filtroAtual != FiltroStatus.TODAS);
-        if (btnFiltroVerde != null)    btnFiltroVerde.setEnabled(filtroAtual != FiltroStatus.CONFORME);
-        if (btnFiltroAmarelo != null)  btnFiltroAmarelo.setEnabled(filtroAtual != FiltroStatus.DIVERGENTE);
-        if (btnFiltroVermelho != null) btnFiltroVermelho.setEnabled(filtroAtual != FiltroStatus.NAO_CADASTRADO);
+        if (btnFiltroTodas != null) btnFiltroTodas.setEnabled(filtroAtual != FiltroStatus.TODAS);
+        if (btnFiltroVerde != null) btnFiltroVerde.setEnabled(filtroAtual != FiltroStatus.CONFORME);
+        if (btnFiltroAmarelo != null)
+            btnFiltroAmarelo.setEnabled(filtroAtual != FiltroStatus.DIVERGENTE);
+        if (btnFiltroVermelho != null)
+            btnFiltroVermelho.setEnabled(filtroAtual != FiltroStatus.NAO_CADASTRADO);
     }
 
     // ====== BASE ======
@@ -364,10 +362,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
             TextView tvMsg = view.findViewById(R.id.tvLoadingMsg);
             tvMsg.setText(mensagem);
 
-            loadingDialog = new AlertDialog.Builder(this, R.style.AppDialogTheme)
-                    .setView(view)
-                    .setCancelable(false)
-                    .create();
+            loadingDialog = new AlertDialog.Builder(this, R.style.AppDialogTheme).setView(view).setCancelable(false).create();
             loadingDialog.show();
         } else {
             if (!loadingDialog.isShowing()) loadingDialog.show();
@@ -475,9 +470,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
             novo.status = ItemLeituraSessao.STATUS_NAO_ENCONTRADO;
         } else {
             boolean mesmaLoja = (lojaSelecionada != null && lojaSelecionada.equals(item.loja));
-            boolean mesmoSetor = (setorSelecionado != null
-                    && item.codlocalizacao != null
-                    && item.codlocalizacao.equals(setorSelecionado.codlocalizacao));
+            boolean mesmoSetor = (setorSelecionado != null && item.codlocalizacao != null && item.codlocalizacao.equals(setorSelecionado.codlocalizacao));
 
             if (mesmaLoja && mesmoSetor) {
                 novo.status = ItemLeituraSessao.STATUS_OK;
@@ -514,24 +507,18 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         int padding = (int) (16 * getResources().getDisplayMetrics().density);
         input.setPadding(padding, padding, padding, padding);
 
-        new AlertDialog.Builder(this)
-                .setTitle("Simular leitura de EPC")
-                .setView(input)
-                .setPositiveButton("Simular", (dialog, which) -> {
-                    String epc = input.getText().toString().trim();
-                    if (epc.isEmpty()) {
-                        epc = gerarEpcAleatorio();
-                        Toast.makeText(this, "EPC aleatório: " + epc, Toast.LENGTH_SHORT).show();
-                    }
-                    processarEPC(epc);
-                })
-                .setNeutralButton("Aleatório", (dialog, which) -> {
-                    String epcAleatorio = gerarEpcAleatorio();
-                    Toast.makeText(this, "EPC aleatório: " + epcAleatorio, Toast.LENGTH_SHORT).show();
-                    processarEPC(epcAleatorio);
-                })
-                .setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss())
-                .show();
+        new AlertDialog.Builder(this).setTitle("Simular leitura de EPC").setView(input).setPositiveButton("Simular", (dialog, which) -> {
+            String epc = input.getText().toString().trim();
+            if (epc.isEmpty()) {
+                epc = gerarEpcAleatorio();
+                Toast.makeText(this, "EPC aleatório: " + epc, Toast.LENGTH_SHORT).show();
+            }
+            processarEPC(epc);
+        }).setNeutralButton("Aleatório", (dialog, which) -> {
+            String epcAleatorio = gerarEpcAleatorio();
+            Toast.makeText(this, "EPC aleatório: " + epcAleatorio, Toast.LENGTH_SHORT).show();
+            processarEPC(epcAleatorio);
+        }).setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss()).show();
     }
 
     private void atualizarFeedbackDaLeitura(ItemLeituraSessao sessao) {
@@ -551,17 +538,13 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                 break;
 
             case ItemLeituraSessao.STATUS_SETOR_ERRADO:
-                String setorBase = (sessao.item != null && sessao.item.codlocalizacao != null)
-                        ? sessao.item.codlocalizacao
-                        : "-";
+                String setorBase = (sessao.item != null && sessao.item.codlocalizacao != null) ? sessao.item.codlocalizacao : "-";
                 msg = "Atenção: item da loja correta, mas em outro setor (setor na base: " + setorBase + ").";
                 corFundo = Color.parseColor("#FFF8E1");
                 break;
 
             case ItemLeituraSessao.STATUS_LOJA_ERRADA:
-                String lojaBase = (sessao.item != null && sessao.item.loja != null)
-                        ? sessao.item.loja
-                        : "-";
+                String lojaBase = (sessao.item != null && sessao.item.loja != null) ? sessao.item.loja : "-";
                 msg = "Alerta: item pertence à loja " + lojaBase + ", não à loja " + lojaSelecionada + ".";
                 corFundo = Color.parseColor("#FFF3E0");
                 break;
@@ -577,8 +560,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
 
         Drawable bg = tvMsgLeitura.getBackground();
         if (bg instanceof android.graphics.drawable.GradientDrawable) {
-            android.graphics.drawable.GradientDrawable gd =
-                    (android.graphics.drawable.GradientDrawable) bg.mutate();
+            android.graphics.drawable.GradientDrawable gd = (android.graphics.drawable.GradientDrawable) bg.mutate();
             gd.setColor(corFundo);
         } else {
             tvMsgLeitura.setBackgroundColor(corFundo);
@@ -597,12 +579,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         if (listaPlanilha != null) {
             for (ItemPlanilha item : listaPlanilha) {
                 if (item == null) continue;
-                if (item.loja != null
-                        && item.loja.equals(lojaSelecionada)
-                        && item.codlocalizacao != null
-                        && setorSelecionado != null
-                        && item.codlocalizacao.equals(setorSelecionado.codlocalizacao)
-                ) {
+                if (item.loja != null && item.loja.equals(lojaSelecionada) && item.codlocalizacao != null && setorSelecionado != null && item.codlocalizacao.equals(setorSelecionado.codlocalizacao)) {
                     total++;
                 }
             }
@@ -628,9 +605,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
             if (lido == null) continue;
 
             boolean naoEstaNaPlanilha = (lido.item == null) || !listaPlanilha.contains(lido.item);
-            boolean editou = lido.item != null
-                    && lido.item.descresumida != null
-                    && !lido.item.descresumida.isEmpty();
+            boolean editou = lido.item != null && lido.item.descresumida != null && !lido.item.descresumida.isEmpty();
 
             if (naoEstaNaPlanilha && editou) {
                 itensNaoCadastradosEditados.add(lido);
@@ -642,15 +617,11 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                 continue;
             }
 
-            String plaqLimpo = lido.item.nroplaqueta != null
-                    ? lido.item.nroplaqueta.trim().replaceFirst("^0+(?!$)", "")
-                    : "";
+            String plaqLimpo = lido.item.nroplaqueta != null ? lido.item.nroplaqueta.trim().replaceFirst("^0+(?!$)", "") : "";
 
             if (plaqLimpo.equals(lido.epc)) {
                 if (lido.item.loja != null && lido.item.loja.equals(lojaSelecionada)) {
-                    if (setorSelecionado != null
-                            && lido.item.codlocalizacao != null
-                            && !lido.item.codlocalizacao.equals(setorSelecionado.codlocalizacao)) {
+                    if (setorSelecionado != null && lido.item.codlocalizacao != null && !lido.item.codlocalizacao.equals(setorSelecionado.codlocalizacao)) {
                         lido.item.codlocalizacao = setorSelecionado.codlocalizacao;
                     }
                     itensMovidos.add(lido.item);
@@ -670,26 +641,10 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                 alteracoes.append("Descrição final: ").append(fake.descresumida).append("; ");
                 alteracoes.append("Setor final: ").append(fake.codlocalizacao).append("; ");
 
-                LogHelper.logEdicaoItem(
-                        this,
-                        usuario,
-                        lojaSelecionada,
-                        fake.codlocalizacao,
-                        null,
-                        fake,
-                        alteracoes.toString()
-                );
+                LogHelper.logEdicaoItem(this, usuario, lojaSelecionada, fake.codlocalizacao, null, fake, alteracoes.toString());
             }
 
-            LogHelper.logRelatorioPorLoja(
-                    this,
-                    usuario,
-                    lojaSelecionada,
-                    setorSelecionado != null ? setorSelecionado.setor : "",
-                    itensMovidos,
-                    itensOutrasLojas,
-                    epcsNaoCadastrados
-            );
+            LogHelper.logRelatorioPorLoja(this, usuario, lojaSelecionada, setorSelecionado != null ? setorSelecionado.setor : "", itensMovidos, itensOutrasLojas, epcsNaoCadastrados);
 
             File arquivo = ExportadorPlanilha.exportarCSV(this, listaPlanilha);
             String caminho = (arquivo != null) ? arquivo.getAbsolutePath() : null;
@@ -738,8 +693,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         super.onDestroy();
     }
 
-    private void mostrarDialogConfirmacao(String titulo, int corTitulo, String mensagem,
-                                          String textoBtnPositivo, Runnable acaoConfirmar) {
+    private void mostrarDialogConfirmacao(String titulo, int corTitulo, String mensagem, String textoBtnPositivo, Runnable acaoConfirmar) {
         View viewDialog = LayoutInflater.from(this).inflate(R.layout.dialog_confirmacao, null);
 
         TextView tvTitulo = viewDialog.findViewById(R.id.tvConfirmTitle);
@@ -752,10 +706,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         tvMsg.setText(mensagem);
         btnPositivo.setText(textoBtnPositivo);
 
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setView(viewDialog)
-                .setCancelable(false)
-                .create();
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(viewDialog).setCancelable(false).create();
 
         final AlertDialog dialogFinal = dialog;
         btnPositivo.setOnClickListener(v -> {
@@ -788,9 +739,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         final EditText edtDescFinal = edtDesc;
         final Spinner spinnerSetorFinal = spinnerSetor;
 
-        String lojaAtual = (sessaoFinal.item != null && sessaoFinal.item.loja != null && !sessaoFinal.item.loja.trim().isEmpty())
-                ? sessaoFinal.item.loja.trim()
-                : (lojaSelecionada != null ? lojaSelecionada : "");
+        String lojaAtual = (sessaoFinal.item != null && sessaoFinal.item.loja != null && !sessaoFinal.item.loja.trim().isEmpty()) ? sessaoFinal.item.loja.trim() : (lojaSelecionada != null ? lojaSelecionada : "");
         final String lojaAtualFinal = lojaAtual;
 
         tvLoja.setText("Loja: " + lojaAtualFinal);
@@ -820,11 +769,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
             }
         }
 
-        ArrayAdapter<String> setorAdapter = new ArrayAdapter<>(
-                LeituraActivity.this,
-                android.R.layout.simple_spinner_item,
-                nomesSetores
-        );
+        ArrayAdapter<String> setorAdapter = new ArrayAdapter<>(LeituraActivity.this, android.R.layout.simple_spinner_item, nomesSetores);
         setorAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerSetorFinal.setAdapter(setorAdapter);
 
@@ -842,171 +787,110 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
             if (idx >= 0) spinnerSetorFinal.setSelection(idx);
         }
 
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setView(view)
-                .setCancelable(false)
-                .create();
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(view).setCancelable(false).create();
         final AlertDialog dialogFinal = dialog;
 
         btnSalvar.setOnClickListener(v -> {
-            mostrarDialogConfirmacao(
-                    "Confirmar alteração",
-                    Color.parseColor("#1976D2"),
-                    "Tem certeza que deseja salvar as alterações deste item?",
-                    "Salvar",
-                    () -> {
-                        String novaDescDet = edtDescFinal.getText().toString();
-                        String novoSetorNome = (String) spinnerSetorFinal.getSelectedItem();
-                        String novoSetorCodigo = buscarCodigoSetorPorNome(novoSetorNome);
+            mostrarDialogConfirmacao("Confirmar alteração", Color.parseColor("#1976D2"), "Tem certeza que deseja salvar as alterações deste item?", "Salvar", () -> {
+                String novaDescDet = edtDescFinal.getText().toString();
+                String novoSetorNome = (String) spinnerSetorFinal.getSelectedItem();
+                String novoSetorCodigo = buscarCodigoSetorPorNome(novoSetorNome);
 
-                        ItemPlanilha itemAntigo = null;
-                        if (sessaoFinal.item != null) {
-                            itemAntigo = new ItemPlanilha(
-                                    sessaoFinal.item.loja, sessaoFinal.item.sqbem, sessaoFinal.item.codgrupo, sessaoFinal.item.codlocalizacao, sessaoFinal.item.nrobem,
-                                    sessaoFinal.item.nroincorp, sessaoFinal.item.descresumida, sessaoFinal.item.descdetalhada, sessaoFinal.item.qtdbem,
-                                    sessaoFinal.item.nroplaqueta, sessaoFinal.item.nroseriebem, sessaoFinal.item.modelobem
-                            );
-                        }
+                ItemPlanilha itemAntigo = null;
+                if (sessaoFinal.item != null) {
+                    itemAntigo = new ItemPlanilha(sessaoFinal.item.loja, sessaoFinal.item.sqbem, sessaoFinal.item.codgrupo, sessaoFinal.item.codlocalizacao, sessaoFinal.item.nrobem, sessaoFinal.item.nroincorp, sessaoFinal.item.descresumida, sessaoFinal.item.descdetalhada, sessaoFinal.item.qtdbem, sessaoFinal.item.nroplaqueta, sessaoFinal.item.nroseriebem, sessaoFinal.item.modelobem);
+                }
 
-                        if (sessaoFinal.item == null) {
-                            ItemPlanilha itemNovoFake = new ItemPlanilha(
-                                    lojaAtualFinal, "", "", novoSetorCodigo, "", "",
-                                    novaDescDet,
-                                    novaDescDet,
-                                    "",
-                                    sessaoFinal.epc, "", ""
-                            );
-                            sessaoFinal.item = itemNovoFake;
-                            sessaoFinal.encontrado = true;
+                if (sessaoFinal.item == null) {
+                    ItemPlanilha itemNovoFake = new ItemPlanilha(lojaAtualFinal, "", "", novoSetorCodigo, "", "", novaDescDet, novaDescDet, "", sessaoFinal.epc, "", "");
+                    sessaoFinal.item = itemNovoFake;
+                    sessaoFinal.encontrado = true;
 
-                            aplicarFiltro(filtroAtual);
-                            atualizarContadorItens();
-                            dialogFinal.dismiss();
-                            return;
-                        } else {
-                            sessaoFinal.item.descdetalhada = novaDescDet;
-                            if (sessaoFinal.item.descresumida == null || sessaoFinal.item.descresumida.trim().isEmpty()) {
-                                sessaoFinal.item.descresumida = novaDescDet;
-                            }
-                            sessaoFinal.item.loja = lojaAtualFinal;
-                            sessaoFinal.item.codlocalizacao = novoSetorCodigo;
-                        }
-
-                        if (sessaoFinal.item != null && sessaoFinal.item.nroplaqueta != null) {
-                            BancoHelper bancoHelper = new BancoHelper(getApplicationContext());
-                            bancoHelper.atualizarDescricaoESetor(sessaoFinal.item.nroplaqueta, novaDescDet, novoSetorCodigo);
-                        }
-
-                        StringBuilder alteracoes = new StringBuilder();
-                        if (itemAntigo != null) {
-                            String antigaDet = itemAntigo.descdetalhada != null ? itemAntigo.descdetalhada : "";
-                            String novaDet = novaDescDet != null ? novaDescDet : "";
-
-                            if (!antigaDet.equals(novaDet)) {
-                                alteracoes.append("Descrição detalhada: ")
-                                        .append(antigaDet)
-                                        .append(" -> ")
-                                        .append(novaDet)
-                                        .append("; ");
-                            }
-
-                            if (!itemAntigo.codlocalizacao.equals(novoSetorCodigo)) {
-                                alteracoes.append("Setor: ")
-                                        .append(itemAntigo.codlocalizacao)
-                                        .append(" -> ")
-                                        .append(novoSetorCodigo)
-                                        .append("; ");
-                            }
-                        }
-
-                        if (alteracoes.length() > 0) {
-                            LogHelper.logEdicaoItem(
-                                    getApplicationContext(),
-                                    usuario,
-                                    lojaAtualFinal,
-                                    novoSetorCodigo,
-                                    itemAntigo,
-                                    sessaoFinal.item,
-                                    alteracoes.toString()
-                            );
-                        }
-
-                        aplicarFiltro(filtroAtual);
-                        atualizarContadorItens();
-                        dialogFinal.dismiss();
+                    aplicarFiltro(filtroAtual);
+                    atualizarContadorItens();
+                    dialogFinal.dismiss();
+                    return;
+                } else {
+                    sessaoFinal.item.descdetalhada = novaDescDet;
+                    if (sessaoFinal.item.descresumida == null || sessaoFinal.item.descresumida.trim().isEmpty()) {
+                        sessaoFinal.item.descresumida = novaDescDet;
                     }
-            );
+                    sessaoFinal.item.loja = lojaAtualFinal;
+                    sessaoFinal.item.codlocalizacao = novoSetorCodigo;
+                }
+
+                if (sessaoFinal.item != null && sessaoFinal.item.nroplaqueta != null) {
+                    BancoHelper bancoHelper = new BancoHelper(getApplicationContext());
+                    bancoHelper.atualizarDescricaoESetor(sessaoFinal.item.nroplaqueta, novaDescDet, novoSetorCodigo);
+                }
+
+                StringBuilder alteracoes = new StringBuilder();
+                if (itemAntigo != null) {
+                    String antigaDet = itemAntigo.descdetalhada != null ? itemAntigo.descdetalhada : "";
+                    String novaDet = novaDescDet != null ? novaDescDet : "";
+
+                    if (!antigaDet.equals(novaDet)) {
+                        alteracoes.append("Descrição detalhada: ").append(antigaDet).append(" -> ").append(novaDet).append("; ");
+                    }
+
+                    if (!itemAntigo.codlocalizacao.equals(novoSetorCodigo)) {
+                        alteracoes.append("Setor: ").append(itemAntigo.codlocalizacao).append(" -> ").append(novoSetorCodigo).append("; ");
+                    }
+                }
+
+                if (alteracoes.length() > 0) {
+                    LogHelper.logEdicaoItem(getApplicationContext(), usuario, lojaAtualFinal, novoSetorCodigo, itemAntigo, sessaoFinal.item, alteracoes.toString());
+                }
+
+                aplicarFiltro(filtroAtual);
+                atualizarContadorItens();
+                dialogFinal.dismiss();
+            });
         });
 
         btnRemover.setOnClickListener(v -> {
-            mostrarDialogConfirmacao(
-                    "Remover item",
-                    Color.parseColor("#D32F2F"),
-                    "Tem certeza que deseja salvar as alterações e remover esse item da lista?\n\nEsta ação não pode ser desfeita.",
-                    "Remover",
-                    () -> {
-                        String novaDesc = edtDescFinal.getText().toString();
-                        String novoSetorNome = (String) spinnerSetorFinal.getSelectedItem();
-                        String novoSetorCodigo = buscarCodigoSetorPorNome(novoSetorNome);
+            mostrarDialogConfirmacao("Remover item", Color.parseColor("#D32F2F"), "Tem certeza que deseja salvar as alterações e remover esse item da lista?\n\nEsta ação não pode ser desfeita.", "Remover", () -> {
+                String novaDesc = edtDescFinal.getText().toString();
+                String novoSetorNome = (String) spinnerSetorFinal.getSelectedItem();
+                String novoSetorCodigo = buscarCodigoSetorPorNome(novoSetorNome);
 
-                        ItemPlanilha itemAntigo = null;
-                        if (sessaoFinal.item != null) {
-                            itemAntigo = new ItemPlanilha(
-                                    sessaoFinal.item.loja, sessaoFinal.item.sqbem, sessaoFinal.item.codgrupo, sessaoFinal.item.codlocalizacao, sessaoFinal.item.nrobem,
-                                    sessaoFinal.item.nroincorp, sessaoFinal.item.descresumida, sessaoFinal.item.descdetalhada, sessaoFinal.item.qtdbem,
-                                    sessaoFinal.item.nroplaqueta, sessaoFinal.item.nroseriebem, sessaoFinal.item.modelobem
-                            );
+                ItemPlanilha itemAntigo = null;
+                if (sessaoFinal.item != null) {
+                    itemAntigo = new ItemPlanilha(sessaoFinal.item.loja, sessaoFinal.item.sqbem, sessaoFinal.item.codgrupo, sessaoFinal.item.codlocalizacao, sessaoFinal.item.nrobem, sessaoFinal.item.nroincorp, sessaoFinal.item.descresumida, sessaoFinal.item.descdetalhada, sessaoFinal.item.qtdbem, sessaoFinal.item.nroplaqueta, sessaoFinal.item.nroseriebem, sessaoFinal.item.modelobem);
 
-                            sessaoFinal.item.descresumida = novaDesc;
-                            sessaoFinal.item.codlocalizacao = novoSetorCodigo;
-                            sessaoFinal.item.loja = lojaAtualFinal;
+                    sessaoFinal.item.descresumida = novaDesc;
+                    sessaoFinal.item.codlocalizacao = novoSetorCodigo;
+                    sessaoFinal.item.loja = lojaAtualFinal;
 
-                            if (sessaoFinal.item.nroplaqueta != null) {
-                                BancoHelper bancoHelper = new BancoHelper(getApplicationContext());
-                                bancoHelper.atualizarDescricaoESetor(sessaoFinal.item.nroplaqueta, novaDesc, novoSetorCodigo);
-                            }
-                        }
-
-                        StringBuilder alteracoes = new StringBuilder();
-                        if (itemAntigo != null) {
-                            if (!itemAntigo.descresumida.equals(novaDesc)) {
-                                alteracoes.append("Descrição: ")
-                                        .append(itemAntigo.descresumida)
-                                        .append(" -> ")
-                                        .append(novaDesc)
-                                        .append("; ");
-                            }
-                            if (!itemAntigo.codlocalizacao.equals(novoSetorCodigo)) {
-                                alteracoes.append("Setor: ")
-                                        .append(itemAntigo.codlocalizacao)
-                                        .append(" -> ")
-                                        .append(novoSetorCodigo)
-                                        .append("; ");
-                            }
-                        }
-
-                        if (alteracoes.length() > 0) {
-                            LogHelper.logEdicaoItem(
-                                    getApplicationContext(),
-                                    usuario,
-                                    lojaAtualFinal,
-                                    novoSetorCodigo,
-                                    itemAntigo,
-                                    sessaoFinal.item,
-                                    alteracoes.toString()
-                            );
-                        }
-
-                        itensSessao.remove(sessaoFinal);
-                        if (posVisivelFinal >= 0 && posVisivelFinal < itensVisiveis.size()) {
-                            itensVisiveis.remove(posVisivelFinal);
-                        }
-
-                        aplicarFiltro(filtroAtual);
-                        atualizarContadorItens();
-                        dialogFinal.dismiss();
+                    if (sessaoFinal.item.nroplaqueta != null) {
+                        BancoHelper bancoHelper = new BancoHelper(getApplicationContext());
+                        bancoHelper.atualizarDescricaoESetor(sessaoFinal.item.nroplaqueta, novaDesc, novoSetorCodigo);
                     }
-            );
+                }
+
+                StringBuilder alteracoes = new StringBuilder();
+                if (itemAntigo != null) {
+                    if (!itemAntigo.descresumida.equals(novaDesc)) {
+                        alteracoes.append("Descrição: ").append(itemAntigo.descresumida).append(" -> ").append(novaDesc).append("; ");
+                    }
+                    if (!itemAntigo.codlocalizacao.equals(novoSetorCodigo)) {
+                        alteracoes.append("Setor: ").append(itemAntigo.codlocalizacao).append(" -> ").append(novoSetorCodigo).append("; ");
+                    }
+                }
+
+                if (alteracoes.length() > 0) {
+                    LogHelper.logEdicaoItem(getApplicationContext(), usuario, lojaAtualFinal, novoSetorCodigo, itemAntigo, sessaoFinal.item, alteracoes.toString());
+                }
+
+                itensSessao.remove(sessaoFinal);
+                if (posVisivelFinal >= 0 && posVisivelFinal < itensVisiveis.size()) {
+                    itensVisiveis.remove(posVisivelFinal);
+                }
+
+                aplicarFiltro(filtroAtual);
+                atualizarContadorItens();
+                dialogFinal.dismiss();
+            });
         });
 
         btnCancelar.setOnClickListener(v -> dialogFinal.dismiss());
@@ -1099,8 +983,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
 
     private void solicitarConfirmacaoSaida() {
 
-        View viewDialog = LayoutInflater.from(this)
-                .inflate(R.layout.dialog_confirmacao, null);
+        View viewDialog = LayoutInflater.from(this).inflate(R.layout.dialog_confirmacao, null);
 
         TextView tvTitulo = viewDialog.findViewById(R.id.tvConfirmTitle);
         TextView tvMensagem = viewDialog.findViewById(R.id.tvConfirmMsg);
@@ -1111,11 +994,8 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         tvMensagem.setText("Todas as alterações serão perdidas.\nDeseja sair?");
         btnConfirmar.setText("Confirmar");
 
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setView(viewDialog)
-                .setCancelable(false)
-                .create();
- 
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(viewDialog).setCancelable(false).create();
+
         btnConfirmar.setOnClickListener(v -> {
             dialog.dismiss();
 
@@ -1124,7 +1004,8 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
                 if (leitorRFID != null && lendo) {
                     leitorRFID.pararLeitura();
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
 
             lendo = false;
             finish();
@@ -1152,6 +1033,7 @@ public class LeituraActivity extends AppCompatActivity implements IAsynchronousM
         }
         return false;
     }
+
     private void iniciarFluxoFinalizacao() {
         btnFinalizar.setText("Finalizando...");
         btnFinalizar.setEnabled(false);
